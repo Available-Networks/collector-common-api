@@ -30,13 +30,11 @@ export default abstract class AbstractApiClient {
 
     /**
      * Protected connect function.
-     * Can be overridden in subclasses for custom initialization.
+     * Must be overridden in subclasses for custom initialization.
      */
-    public async init(): Promise<AbstractApiClient> {
-        throw new Error("Not implemented");
-    }
+    public abstract init(): AbstractApiClient | Promise<AbstractApiClient>;
 
-    public abstract getAllData(): Promise<any>;
+    public abstract getAllData(): Promise<Record<string, any>> | Record<string, any>;
 
     /**
      * Generic request method.
@@ -59,12 +57,18 @@ export default abstract class AbstractApiClient {
                 ...opts?.headers,
             },
             data: {
-                ...authConfig.body,
                 ...opts?.data,
             },
             timeout: opts?.timeout ?? DEFAULT_REQUEST_TIMEOUT_SECONDS * 1000,
             ...opts,
         };
+
+        if(authConfig.body) {
+            options.data = {
+                ...authConfig.body,
+                ...options.data,
+            };
+        }
 
         const response: AxiosResponse = await axios.request(options);
         if(response.status >= 200 && response.status < 300) {
