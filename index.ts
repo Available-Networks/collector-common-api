@@ -1,6 +1,6 @@
 import InvalidAPIResponseError from "./errors/invalid-api-response";
 import Logger from "./logger";
-import AWS3Client from "./aws";
+import AWS3Client from "./aws/aws3";
 import { AbstractApiClient, type AuthConfig } from "./api-client/api-client";
 import * as Util from "./util";
 
