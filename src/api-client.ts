@@ -42,11 +42,11 @@ export default abstract class AbstractApiClient {
      * Generic request method.
      * Accepts full AxiosRequestConfig to allow custom headers, query params, etc.
      */
-    protected async request<T = any>(
+    protected async request(
         method: "GET" | "POST" | "PUT" | "DELETE",
         endpoint: string,
         opts?: AxiosRequestConfig
-    ): Promise<T | null> {
+    ): Promise<AxiosResponse<any, any, {}> | null> {
         const authConfig = await this.authConfig;
 
         const url = `${this.baseUrl}/${endpoint}`;
@@ -66,21 +66,15 @@ export default abstract class AbstractApiClient {
             ...opts,
         };
 
-        try {
-            const response: AxiosResponse = await axios.request(options);
+        const response: AxiosResponse = await axios.request(options);
+        if(response.status >= 200 && response.status < 300) {
             Logger.http(`[${method} - ${response.statusText}] ${url}`);
-
-            return response.data as T;
-        } catch(e: any) {
-            if(e instanceof AxiosError) {
-                const error = e.response ? e.response.statusText : "No response";
-                Logger.error(`[${method} - ${error}] ${url}`);
-                return null;
-            }
-            
-            Logger.error(e.message);
-            return null;
+        } else {
+            Logger.error(`[${method} - ${response.statusText}] ${url}`);
+            throw new InvalidAPIResponseError(endpoint, `HTTP ${response.status} - ${response.statusText}`);
         }
+
+        return response;
     }
 
     /**

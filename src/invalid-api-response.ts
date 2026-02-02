@@ -11,7 +11,7 @@ export default class InvalidAPIResponseError extends Error {
     }
 
     constructor(route: string, data: any) {
-        const message = `API route '${route}' returned invalid data`;
+        const message = `API route '${route}' returned invalid data: ${JSON.stringify(data)}`;
 
         super(message);
         
