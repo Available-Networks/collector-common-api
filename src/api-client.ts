@@ -1,8 +1,8 @@
 import axios, { AxiosError, AxiosHeaders, type AxiosRequestConfig, type AxiosResponse } from "axios";
 import z from "zod";
 
-import InvalidAPIResponseError from "../errors/invalid-api-response";
-import Logger from "../logger";
+import InvalidAPIResponseError from "./invalid-api-response";
+import Logger from "./logger";
 
 const DEFAULT_REQUEST_TIMEOUT_SECONDS = 60;
 
@@ -14,7 +14,7 @@ export type AuthConfig = {
 /**
  * Generic abstract API client
  */
-export abstract class AbstractApiClient {
+export default abstract class AbstractApiClient {
     protected baseUrl: string;
 
     protected constructor(baseUrl: string) {

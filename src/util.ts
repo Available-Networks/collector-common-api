@@ -1,6 +1,6 @@
 import { z } from "zod";
 import Logger from "./logger";
-import type AWS3Client from "./aws/aws3";
+import type AWS3Client from "./aws3";
 
 export function zParseUsing<T>(
     schema: z.ZodType<T>,

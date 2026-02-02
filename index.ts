@@ -1,14 +1,15 @@
-import InvalidAPIResponseError from "./errors/invalid-api-response";
-import Logger from "./logger";
-import AWS3Client from "./aws/aws3";
-import { AbstractApiClient, type AuthConfig } from "./api-client/api-client";
-import * as Util from "./util";
+import Logger from "./src/logger";
+import AWS3Client from "./src/aws3";
+import * as Util from "./src/util";
+import InvalidAPIResponseError from "./src/invalid-api-response";
+
+import AbstractApiClient, { type AuthConfig } from "./src/api-client";
 
 export {
     InvalidAPIResponseError,
     Logger,
     AWS3Client,
-    AbstractApiClient,
+    AbstractApiClient, 
     type AuthConfig,
     Util
 };

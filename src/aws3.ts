@@ -1,4 +1,4 @@
-import Logger from "../logger";
+import Logger from "./logger";
 import { S3Client, PutObjectCommand, paginateListBuckets, type Bucket, HeadObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 
 export default class AWS3Client {
@@ -40,7 +40,6 @@ export default class AWS3Client {
         }
     }
 
-    @Connected
     public async getAllBuckets() {
         const buckets: Bucket[] = [];
 
@@ -52,7 +51,6 @@ export default class AWS3Client {
         return buckets;
     }
 
-    @Connected
     public async uploadObject(fullPath: string, body: Buffer | Uint8Array | Blob | string): Promise<boolean> {
         const command = new PutObjectCommand({
             Bucket: this._bucketName,
@@ -78,7 +76,6 @@ export default class AWS3Client {
         }
     }
 
-    @Connected
     public async createFolder(folderPath: string) {
         // ensure trailing slash
         const key = folderPath.endsWith("/")
@@ -98,7 +95,6 @@ export default class AWS3Client {
         return exists;
     }
 
-    @Connected
     public async folderExists(prefix: string ): Promise<boolean> {
         const normalized = prefix.endsWith("/") ? prefix : `${prefix}/`
 
@@ -113,7 +109,6 @@ export default class AWS3Client {
         return (res.KeyCount ?? 0) > 0
     }
 
-    @Connected
     public async deleteObject(fullPath: string): Promise<boolean> {
         await this._s3Client!.send(
             new DeleteObjectCommand({
@@ -126,7 +121,6 @@ export default class AWS3Client {
         return !fileStillExists;
     }
 
-    @Connected
     public async validateFileExistsInBucket(key: string): Promise<boolean> {
         try {
             await this._s3Client!.send(
@@ -141,21 +135,4 @@ export default class AWS3Client {
             throw err; // permission / auth / networking errors
         }
     }
-}
-
-function Connected(
-    _target: AWS3Client, 
-    _propertyKey: string, 
-    descriptor: any
-): PropertyDescriptor {
-    const originalMethod = descriptor.value;
-    descriptor.value = async function(...args: any[]) {
-        if(!this._s3Client) {
-            throw new Error("AWS S3 Client not initialized. Call initializeClient() first.");
-        }
-        
-        return originalMethod.apply(this, args);
-    };
-    
-    return descriptor;
 }
