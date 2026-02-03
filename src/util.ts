@@ -19,28 +19,40 @@ export function zParseUsing<T>(
 export const cidrRegex = /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}\/(?:3[0-2]|[12]?\d)$/;
 export const ipRegex = /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
 
-export const optionalString = z.string().optional();
-export const validString = z.string().min(1);
-export const validNumber = z.string()
+export const zPort = z
+    .string()
+    .default("")
+    .transform((val: string) => parseInt(val!, 10))
+    .refine((val: number) => !isNaN(val) && val > 0 && val <= 65535, {
+        message: "Invalid port number"
+    })
+
+export const zOptionalString = z.string().optional();
+export const zValidString = z.string().min(1);
+export const zValidNumber = z.string()
     .transform(v => parseInt(v))
     .refine(num => !isNaN(num) && num > 0);
-export const yesNoBoolean = z.enum(["yes", "no"])
+export const zYesNoBoolean = z.enum(["yes", "no"])
     .optional()
     .transform((v) => v === "yes");
-export const optionalDate = z
+export const zOptionalDate = z
     .preprocess(
         (val: any) => {
             return val === undefined || val === null ? undefined : new Date(val)
         },
         z.date().optional()
     )
-export const validDate = z
+export const zValidDate = z
     .preprocess(
         (val: any) => {
             return val === undefined || val === null ? undefined : new Date(val)
         },
         z.date()
     )
+    
+export const zAwsString = zValidString.regex(/^\w{2}-[a-z]+-\d$/, {
+    message: "Invalid AWS region format (e.g. us-east-1, eu-west-1)"
+})
     
     
 export const hasKeys = (value: unknown): value is Record<string, unknown> => {
