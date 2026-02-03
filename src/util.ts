@@ -1,6 +1,6 @@
 import { z } from "zod";
-import Logger from "./logger";
-import type AWS3Client from "./aws3";
+import Logger from "./logging/logger";
+import AWS3Uploader from "./cloud/uploaders/aws3Uploader";
 
 export function zParseUsing<T>(
     schema: z.ZodType<T>,
@@ -19,41 +19,6 @@ export function zParseUsing<T>(
 export const cidrRegex = /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}\/(?:3[0-2]|[12]?\d)$/;
 export const ipRegex = /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
 
-export const zPort = z
-    .string()
-    .default("")
-    .transform((val: string) => parseInt(val!, 10))
-    .refine((val: number) => !isNaN(val) && val > 0 && val <= 65535, {
-        message: "Invalid port number"
-    })
-
-export const zOptionalString = z.string().optional();
-export const zValidString = z.string().min(1);
-export const zValidNumber = z.string()
-    .transform(v => parseInt(v))
-    .refine(num => !isNaN(num) && num > 0);
-export const zYesNoBoolean = z.enum(["yes", "no"])
-    .optional()
-    .transform((v) => v === "yes");
-export const zOptionalDate = z
-    .preprocess(
-        (val: any) => {
-            return val === undefined || val === null ? undefined : new Date(val)
-        },
-        z.date().optional()
-    )
-export const zValidDate = z
-    .preprocess(
-        (val: any) => {
-            return val === undefined || val === null ? undefined : new Date(val)
-        },
-        z.date()
-    )
-    
-export const zAwsString = zValidString.regex(/^\w{2}-[a-z]+-\d$/, {
-    message: "Invalid AWS region format (e.g. us-east-1, eu-west-1)"
-})
-    
     
 export const hasKeys = (value: unknown): value is Record<string, unknown> => {
     return (
@@ -90,19 +55,6 @@ export const isValidData = (data: unknown): boolean => {
         }
 
         return false;
-    }
-}
-
-export const uploadToS3 = async (client: AWS3Client, key: string, data: string) => {
-    Logger.debug(`Uploading data to S3 at key '${key}'`);
-    try {
-        const uploaded = await client.uploadObject(key, data);
-        if(!uploaded) {
-            throw new Error(`File was not found at path '${key}' in S3 after upload`)
-        }
-        Logger.info(`Uploaded data to S3 at key '${key}'`);
-    } catch(e: any) {
-        Logger.error(`Failed to upload data to S3 at key '${key}': ${e.message}`);
     }
 }
 

@@ -1,7 +1,8 @@
-import Logger from "./logger";
+import Logger from "../../logging/logger";
 import { S3Client, PutObjectCommand, paginateListBuckets, type Bucket, HeadObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import CloudUploadClient from "./cloudUploadClient";
 
-export default class AWS3Client {
+export default class AWS3Uploader extends CloudUploadClient {
     private _s3Client: S3Client | null;
     private _bucketName: string;
 
@@ -10,11 +11,13 @@ export default class AWS3Client {
     }
 
     private constructor(s3Client: S3Client, bucketName: string) {
+        super();
+        
         this._s3Client = s3Client;
         this._bucketName = bucketName;
     }
 
-    public static Connect(region: string, accessKeyId: string, secretAccessKey: string, bucketName: string): AWS3Client {
+    public static Connect(region: string, accessKeyId: string, secretAccessKey: string, bucketName: string): AWS3Uploader {
         Logger.debug("Initializing AWS S3 Client");
 
         const client = new S3Client({
@@ -25,7 +28,7 @@ export default class AWS3Client {
             }
         });
 
-        const s3Client = new AWS3Client(client, bucketName);
+        const s3Client = new AWS3Uploader(client, bucketName);
         return s3Client;
     }
 
@@ -51,20 +54,20 @@ export default class AWS3Client {
         return buckets;
     }
 
-    public async uploadObject(fullPath: string, body: Buffer | Uint8Array | Blob | string): Promise<boolean> {
+    public override async uploadFile(filePath: string, body: Buffer | Uint8Array | Blob | string): Promise<boolean> {
         const command = new PutObjectCommand({
             Bucket: this._bucketName,
-            Key: fullPath,
+            Key: filePath,
             Body: body
         });
 
         try {
-            Logger.debug(`Uploading data to bucket '${this._bucketName}' at path '${fullPath}'`);
+            Logger.debug(`Uploading data to bucket '${this._bucketName}' at path '${filePath}'`);
             await this._s3Client!.send(command);
 
-            const uploaded = await this.validateFileExistsInBucket(fullPath);
+            const uploaded = await this.validateFileExistsInBucket(filePath);
             if(uploaded) {
-                Logger.debug(`Successfully uploaded object to bucket '${this._bucketName}' at path '${fullPath}'`);
+                Logger.debug(`Successfully uploaded object to bucket '${this._bucketName}' at path '${filePath}'`);
                 return true;
             } else {
                 Logger.error(`Failed to upload object to S3, file does not exist`);

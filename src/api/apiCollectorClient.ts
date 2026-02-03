@@ -1,12 +1,12 @@
-import axios, { AxiosError, AxiosHeaders, type AxiosRequestConfig, type AxiosResponse } from "axios";
+import axios, { AxiosHeaders, type AxiosRequestConfig, type AxiosResponse } from "axios";
 import z from "zod";
 
-import InvalidAPIResponseError from "./invalid-api-response";
-import Logger from "./logger";
+import InvalidAPIResponseError from "../errors/invalidApiResponseError";
+import Logger from "../logging/logger";
 
 const DEFAULT_REQUEST_TIMEOUT_SECONDS = 60;
 
-export type AuthConfig = {
+export type ApiAuthConfig = {
     headers?: AxiosHeaders;
     body?: Record<string, any>;
 };
@@ -14,7 +14,7 @@ export type AuthConfig = {
 /**
  * Generic abstract API client
  */
-export default abstract class AbstractApiClient {
+export default abstract class ApiCollectorClient {
     protected baseUrl: string;
 
     protected constructor(baseUrl: string) {
@@ -26,13 +26,13 @@ export default abstract class AbstractApiClient {
     /**
      * Subclasses must provide authentication config (headers or body)
      */
-    protected abstract get authConfig(): AuthConfig | Promise<AuthConfig>;
+    protected abstract get authConfig(): ApiAuthConfig | Promise<ApiAuthConfig>;
 
     /**
      * Protected connect function.
      * Must be overridden in subclasses for custom initialization.
      */
-    public abstract init(): AbstractApiClient | Promise<AbstractApiClient>;
+    public abstract init(): ApiCollectorClient | Promise<ApiCollectorClient>;
 
     public abstract getAllData(): Promise<Record<string, any>> | Record<string, any>;
 
