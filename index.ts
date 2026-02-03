@@ -1,12 +1,12 @@
-import Logger from "./src/logger";
-import AWS3Client from "./src/aws3";
-import * as Util from "./src/util";
-import InvalidAPIResponseError from "./src/invalid-api-response";
+import Logger from "./lib/logger";
+import AWS3Client from "./lib/aws3";
+import * as Util from "./lib/util";
+import InvalidAPIResponseError from "./lib/invalid-api-response";
 
-import AbstractApiClient, { type AuthConfig } from "./src/api-client";
-import type { LogLevel, NodeEnv, ServiceLocation } from "./src/config";
+import AbstractApiClient, { type AuthConfig } from "./lib/api-client";
+import type { LogLevel, NodeEnv, ServiceLocation } from "./lib/config";
 
-import { zLogLevels, zNodeEnvs, zServiceLocations } from "./src/config";
+import { zLogLevels, zNodeEnvs, zServiceLocations } from "./lib/config";
 
 export {
     InvalidAPIResponseError,
