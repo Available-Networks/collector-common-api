@@ -27,6 +27,14 @@ const CloudClients = [
     "aws_s3"
 ] as const;
 
+export const zCloudClientsList = z
+  .string()
+  .transform((str) => str.split(",").map(s => s.trim())) // split string into array
+  .refine((arr) => arr.every((c) => CloudClients.includes(c as any)), {
+    message: "Invalid cloud client specified",
+  })
+  .transform((arr) => arr.map((c) => zCloudClients.parse(c))); // parse each item
+
 export const zCloudClients = z.enum(CloudClients).default("aws_s3");
 export type CloudClient = z.infer<typeof zCloudClients>;
 
@@ -72,7 +80,7 @@ export const zValidDate = z
         z.date()
     )
     
-export const zAwsString = zValidString.regex(/^\w{2}-[a-z]+-\d$/, {
+export const zAwsRegionString = zValidString.regex(/^\w{2}-[a-z]+-\d$/, {
     message: "Invalid AWS region format (e.g. us-east-1, eu-west-1)"
 })
 

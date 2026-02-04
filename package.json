@@ -8,7 +8,8 @@
     "./cloud": "./dist/cloud/index.js",
     "./errors": "./dist/errors/index.js",
     "./logging": "./dist/logging/index.js",
-    "./zodTypes": "./dist/zodTypes.js"
+    "./zodTypes": "./dist/zodTypes.js",
+    "./config": "./dist/config/index.js"
   },
   "version": "1.0.0",
   "dependencies": {

@@ -1,8 +1,8 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import CloudUploadClient, { CloudUploadOpts } from "./cloudUploadClient";
-import { formatDate } from "../util";
+import CloudUploadClient, { CloudUploadOpts } from "../cloudUploadClient";
+import { formatDate } from "../../util";
 import z from "zod";
-import Logger from "../logging";
+import Logger from "../../logging";
 
 const timeToday = formatDate(new Date());
 
@@ -23,7 +23,7 @@ export default class AWS3UploadClient extends CloudUploadClient {
         });
     }
 
-    Destroy(): void {
+    Disconnect(): void {
         if (this.#s3Client) {
             this.#s3Client.destroy();
             this.#s3Client = null;

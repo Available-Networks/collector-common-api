@@ -2,6 +2,43 @@ import z from "zod";
 import Logger from "../logging";
 import { zServiceLocations, zStrictlyParseConfig } from "../zodTypes";
 
+export type CloudUploadOpts = z.infer<typeof zCloudUploadClientOpts>;
+
+export default abstract class CloudUploadClient {
+    #name: string;
+    
+    protected constructor(name: string) { this.#name = name }
+    
+    get name() { return this.#name };
+    
+    async uploadFile(
+        body: Buffer | Uint8Array | Blob | string,
+        opts: CloudUploadOpts
+    ) {
+        zStrictlyParseConfig(zCloudUploadClientOpts, opts);
+        await this.upload(body, opts);
+    }
+
+    abstract Disconnect();
+
+    static async Create(..._args: any[]): Promise<CloudUploadClient> {
+        throw new Error("Create() must be implemented by subclass");
+    }
+
+    protected abstract upload(
+        body: Buffer | Uint8Array | Blob | string,
+        opts: CloudUploadOpts
+    );
+
+    static safeValidateUploadOpts = (opts: CloudUploadOpts): boolean => {
+        return zCloudUploadClientOpts.safeParse(opts).success;
+    }
+
+    static validateConfig = (data: any, ctx: z.RefinementCtx): boolean => {
+        throw new Error("Not implemented");
+    }
+}
+
 const zCloudUploadClientOpts = z.object({
     filePath: z.string().optional(),
     serviceLocation: zServiceLocations,
@@ -35,38 +72,3 @@ const zCloudUploadClientOpts = z.object({
         message: message
     }))
 })
-
-export type CloudUploadOpts = z.infer<typeof zCloudUploadClientOpts>;
-
-export default abstract class CloudUploadClient {
-    #name: string;
-    
-    protected constructor(name: string) { this.#name = name }
-    
-    get name() { return this.#name };
-    
-    async uploadFile(
-        body: Buffer | Uint8Array | Blob | string,
-        opts: CloudUploadOpts
-    ) {
-        zStrictlyParseConfig(zCloudUploadClientOpts, opts);
-        await this.upload(body, opts);
-    }
-
-    static async Create(..._args: any[]): Promise<CloudUploadClient> {
-        throw new Error("Create() must be implemented by subclass");
-    }
-
-    protected abstract upload(
-        body: Buffer | Uint8Array | Blob | string,
-        opts: CloudUploadOpts
-    );
-
-    static safeValidateUploadOpts = (opts: CloudUploadOpts): boolean => {
-        return zCloudUploadClientOpts.safeParse(opts).success;
-    }
-
-    static validateConfig = (data: any, ctx: z.RefinementCtx): boolean => {
-        throw new Error("Not implemented");
-    }
-}
