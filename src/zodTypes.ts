@@ -77,7 +77,7 @@ export const zAwsString = zValidString.regex(/^\w{2}-[a-z]+-\d$/, {
 })
 
 // super serious function name
-export const zSuperUltraStrictlyParseConfigAndIfFailExitTheEntireThing = <T>(schema: z.ZodType<T>, data: unknown): T => {
+export const zStrictlyParseConfig = <T>(schema: z.ZodType<T>, data: unknown): T | null => {
     const result = schema.safeParse(data);
 
     if(!result.success) {
@@ -87,8 +87,7 @@ export const zSuperUltraStrictlyParseConfigAndIfFailExitTheEntireThing = <T>(sch
             .map((issue) => `- [${issue.path.join(".")}] ${issue.message}`)
             .join("\n");
 
-        console.error(err);
-        process.exit(1);
+        throw(new Error(err));
     }
 
     return result.data;

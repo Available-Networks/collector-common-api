@@ -6,7 +6,7 @@ import Logger from "../logging/logger";
 
 const DEFAULT_REQUEST_TIMEOUT_SECONDS = 60;
 
-export type ApiAuthConfig = {
+export type ApiCollectorAuthConfig = {
     headers?: AxiosHeaders;
     body?: Record<string, any>;
 };
@@ -15,26 +15,19 @@ export type ApiAuthConfig = {
  * Generic abstract API client
  */
 export default abstract class ApiCollectorClient {
-    protected baseUrl: string;
+    #baseUrl: string;
+    #authConfig: ApiCollectorAuthConfig;
 
-    protected constructor(baseUrl: string) {
-        this.baseUrl = baseUrl;
+    protected constructor(baseUrl: string, authConfig: ApiCollectorAuthConfig) {
+        this.#baseUrl = baseUrl;
+        this.#authConfig = authConfig;
     }
 
-    protected abstract isConnected(): boolean;
+    abstract getAllData(): Promise<Record<string, any>> | Record<string, any>;
 
-    /**
-     * Subclasses must provide authentication config (headers or body)
-     */
-    protected abstract get authConfig(): ApiAuthConfig | Promise<ApiAuthConfig>;
-
-    /**
-     * Protected connect function.
-     * Must be overridden in subclasses for custom initialization.
-     */
-    public abstract init(): ApiCollectorClient | Promise<ApiCollectorClient>;
-
-    public abstract getAllData(): Promise<Record<string, any>> | Record<string, any>;
+    static async Create(..._args: any[]): Promise<ApiCollectorClient> {
+        throw new Error("Create() must be implemented by subclass");
+    }
 
     /**
      * Generic request method.
@@ -45,9 +38,9 @@ export default abstract class ApiCollectorClient {
         endpoint: string,
         opts?: AxiosRequestConfig
     ): Promise<AxiosResponse<any, any, {}> | null> {
-        const authConfig = await this.authConfig;
+        const authConfig = this.#authConfig;
 
-        const url = `${this.baseUrl}/${endpoint}`;
+        const url = `${this.#baseUrl}/${endpoint}`;
         const options: AxiosRequestConfig<any> = {
             url: url,
             method,

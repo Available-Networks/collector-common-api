@@ -6,9 +6,9 @@
     ".": "./dist/index.js",
     "./api": "./dist/api/index.js",
     "./cloud": "./dist/cloud/index.js",
-    "./cloud/uploaders": "./dist/cloud/uploaders/index.js",
     "./errors": "./dist/errors/index.js",
-    "./logging": "./dist/logging/index.js"
+    "./logging": "./dist/logging/index.js",
+    "./zodTypes": "./dist/zodTypes.js"
   },
   "version": "1.0.0",
   "dependencies": {

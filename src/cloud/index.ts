@@ -1,7 +1,5 @@
-import CloudUploadClient from "./uploaders/cloudUploadClient";
-import * as CloudConfigValidators from "./cloudConfigValidators";
+import AWS3UploadClient from "./aws3UploadClient";
+import CloudUploadClient, { CloudUploadOpts } from "./cloudUploadClient";
+import CloudUploadClientCollection from "./cloudUploadClientCollection";
 
-export {
-    CloudUploadClient,
-    CloudConfigValidators
-}
+export { CloudUploadClient, AWS3UploadClient, CloudUploadClientCollection, type CloudUploadOpts };
