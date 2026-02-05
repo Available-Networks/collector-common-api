@@ -16,6 +16,6 @@ export const zBaseConfig = z.object({
   NODE_ENV: zNodeEnv.default("development"),
   SERVICE_NAME: z.string().nonempty("SERVICE_NAME is required"),
   SERVICE_LOCATION: zServiceLocations.default("site"),
-  SITE_NAME: z.string().optional(),
-});
+  SITE_NAME: z.string().optional()
+})
 export type BaseConfig = z.infer<typeof zBaseConfig>;

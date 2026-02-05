@@ -1,12 +1,17 @@
 import { zCollectorConfig, type CollectorConfig } from "./collectorConfig";
 import { zCloudConfig, type CloudConfig } from "./cloudConfig";
 import { zBaseConfig, type BaseConfig } from "./baseConfig";
+import { zApiConfig, type ApiConfig } from "./apiConfig";
+
+import { HttpProtocol, zPort } from "./apiConfig";
+
 import z from "zod";
 
 export {
     zCollectorConfig, type CollectorConfig,
     zCloudConfig, type CloudConfig,
     zBaseConfig, type BaseConfig,
+    zApiConfig, type ApiConfig, HttpProtocol, zPort
 }
 
 export const StrictlyParseConfig = <T>(schema: z.ZodType<T>, data: unknown): T | null => {
@@ -69,16 +74,6 @@ export type NodeEnv = z.infer<typeof zNodeEnvs>;
 
 export const zServiceLocations = z.enum(ServiceLocations).default("global");
 export type ServiceLocation = z.infer<typeof zServiceLocations>;
-
-
-// Primitives
-export const zPort = z
-    .string()
-    .default("")
-    .transform((val: string) => parseInt(val!, 10))
-    .refine((val: number) => !isNaN(val) && val > 0 && val <= 65535, {
-        message: "Invalid port number"
-    })
 
 export const zOptionalString = z.string().optional();
 export const zValidString = z.string().min(1);

@@ -11,15 +11,24 @@ import { AxiosError } from "axios";
 export const writeAxiosErrorLog = (error: AxiosError): void => {
     const route: string = error.config.url;
     const errorData: any = error.response?.data;
-    const message: string = (errorData.message ?? error.message).trim();
-    const moreInfo = error.response.statusText;
+    const message: string = (errorData?.message ?? error.message).trim();
+    const moreInfo = error.response?.statusText;
+
+    let finalMessage = `Endpoint '${route}' -> ${message}`;
+    if(moreInfo !== undefined) { finalMessage += ` | ${moreInfo}`; }
 
     switch (error.status) {
-        case 400: Logger.warn(`Endpoint '${route}' -> ${message} | ${moreInfo}`); break;
-        case 403: Logger.warn(`Endpoint '${route}' -> ${message} | ${moreInfo}`); break;
-        case 500: Logger.error(`Endpoint '${route}' -> ${message} | ${moreInfo}`); break;
-        case 501: Logger.warn(`Endpoint '${route}' -> ${message} | ${moreInfo}`); break;
-        default: Logger.error(`Endpoint '${route}' threw an uncaught error -> ${message} | ${moreInfo}`); break;
+        case 400:
+        case 403:
+        case 501: 
+            Logger.warn(finalMessage); 
+            break;
+        case 500: 
+            Logger.error(finalMessage); 
+            break;
+        default: 
+            Logger.error(`Endpoint '${route}' threw an uncaught error -> ${message} | ${moreInfo}`); 
+            break;
     }
 }
 
