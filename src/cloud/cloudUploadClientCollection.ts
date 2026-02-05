@@ -36,11 +36,10 @@ export default class CloudUploadClientCollection {
 
     async upload(data: Buffer | string, opts: CloudUploadOpts) {
         await Promise.all(
-            this.#clients.map(client => {
-                client
-                    .uploadFile(data, opts)
+            this.#clients.map(client => 
+                client.uploadFile(data, opts)
                     .catch((e: any) => Logger.error(`Failed to upload to ${client.name} - ${e.message}`))
-            })
+            )
         )
     }
 

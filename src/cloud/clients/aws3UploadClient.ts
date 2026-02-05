@@ -35,7 +35,7 @@ export default class AWS3UploadClient extends CloudUploadClient {
     }
 
     async upload(
-        data: Buffer | Uint8Array | Blob | string, 
+        data: Buffer | Blob | string, 
         opts: CloudUploadOpts
     ) {
         let { filePath, filename } = opts;

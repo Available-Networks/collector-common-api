@@ -1,6 +1,6 @@
 import z from "zod";
 import Logger from "../logging";
-import { zServiceLocations, zStrictlyParseConfig } from "../zodTypes";
+import { StrictlyParseConfig, zServiceLocations } from "../config";
 
 export type CloudUploadOpts = z.infer<typeof zCloudUploadClientOpts>;
 
@@ -15,7 +15,7 @@ export default abstract class CloudUploadClient {
         body: Buffer | Uint8Array | Blob | string,
         opts: CloudUploadOpts
     ) {
-        zStrictlyParseConfig(zCloudUploadClientOpts, opts);
+        StrictlyParseConfig(zCloudUploadClientOpts, opts);
         await this.upload(body, opts);
     }
 

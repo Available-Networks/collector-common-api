@@ -23,11 +23,16 @@ export default abstract class ApiCollectorClient {
         this.#authConfig = authConfig;
     }
 
+    get baseUrl() { return this.#baseUrl }
+    get authConfig() { return this.#authConfig }
+
     abstract getAllData(): Promise<Record<string, any>> | Record<string, any>;
 
     static async Create(..._args: any[]): Promise<ApiCollectorClient> {
         throw new Error("Create() must be implemented by subclass");
     }
+
+    abstract disconnect();
 
     /**
      * Generic request method.
@@ -41,6 +46,8 @@ export default abstract class ApiCollectorClient {
         const authConfig = this.#authConfig;
 
         const url = `${this.#baseUrl}/${endpoint}`;
+
+        Logger.debug(`Attempting to send ${method} request to ${url}`);
         const options: AxiosRequestConfig<any> = {
             url: url,
             method,
@@ -49,12 +56,13 @@ export default abstract class ApiCollectorClient {
                 ...authConfig.headers,
                 ...opts?.headers,
             },
-            data: {
-                ...opts?.data,
-            },
             timeout: opts?.timeout ?? DEFAULT_REQUEST_TIMEOUT_SECONDS * 1000,
             ...opts,
         };
+
+        if(opts?.data) {
+            options.data = { ...opts?.data }
+        }
 
         if(authConfig.body) {
             options.data = {

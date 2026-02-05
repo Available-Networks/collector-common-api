@@ -3,7 +3,36 @@ import Logger from "./logging/logger";
 import { CloudUploadClientCollection, CloudUploadOpts } from "./cloud";
 import * as fs from 'fs/promises';
 import * as path from "path";
-import { NodeEnv } from "./zodTypes";
+import { NodeEnv } from "./config";
+import { AxiosError } from "axios";
+
+
+
+export const writeAxiosErrorLog = (error: AxiosError): void => {
+    const route: string = error.config.url;
+    const errorData: any = error.response?.data;
+    const message: string = (errorData.message ?? error.message).trim();
+    const moreInfo = error.response.statusText;
+
+    switch (error.status) {
+        case 400: Logger.warn(`Endpoint '${route}' -> ${message} | ${moreInfo}`); break;
+        case 403: Logger.warn(`Endpoint '${route}' -> ${message} | ${moreInfo}`); break;
+        case 500: Logger.error(`Endpoint '${route}' -> ${message} | ${moreInfo}`); break;
+        case 501: Logger.warn(`Endpoint '${route}' -> ${message} | ${moreInfo}`); break;
+        default: Logger.error(`Endpoint '${route}' threw an uncaught error -> ${message} | ${moreInfo}`); break;
+    }
+}
+
+export const printErrorAndReturnNull = (e: any) => {
+    if (e.isAxiosError) {
+        writeAxiosErrorLog(e as AxiosError)
+    } else {
+        Logger.error("Unexpected error was thrown when trying to get node data: " + e.message);
+    }
+    return null;
+}
+
+
 
 export function zParseUsing<T>(
     schema: z.ZodType<T>,
@@ -68,7 +97,12 @@ export const formatDate = (d: Date): string => {
         `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 
-export const exportData = async (uploaders: CloudUploadClientCollection, theData: any, nodeEnv: NodeEnv, uploadOpts: CloudUploadOpts) => {
+export const exportData = async (
+    uploaders: CloudUploadClientCollection,
+    theData: any,
+    nodeEnv: NodeEnv,
+    uploadOpts: CloudUploadOpts
+) => {
     const timeToday = formatDate(new Date());
     const longestName = Math.max(...Object.keys(theData).map(n => n.length));
     const isProduction = nodeEnv === "production";
