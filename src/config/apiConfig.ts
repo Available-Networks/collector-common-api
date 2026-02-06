@@ -14,10 +14,10 @@ export const zPortDefault = (defaultPort: number) => {
 }
 
 export const zApiConfig = z.object({
-  PROTOCOL: zHttpProtocol.optional().default("https"),
+  API_PROTOCOL: zHttpProtocol.optional().default("https"),
   API_HOST: z.string().nonempty(),
-  HTTP_PORT: zPortDefault(80),
-  HTTPS_PORT: zPortDefault(443)
+  API_HTTP_PORT: zPortDefault(80),
+  API_HTTPS_PORT: zPortDefault(443)
 })
 
 export type ApiConfig = z.infer<typeof zApiConfig>;
