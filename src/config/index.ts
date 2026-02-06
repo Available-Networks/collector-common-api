@@ -1,9 +1,5 @@
 import { zCollectorConfig, type CollectorConfig } from "./collector";
-import { zCloudConfig, type CloudConfig } from "./modules/cloud";
-import { zBaseConfig, type BaseConfig } from "./modules/base";
-import { zApiConfig, type ApiConfig } from "./modules/api";
-
-import { HttpProtocol, zPortDefault } from "./modules/api";
+import type { CloudConfig, BaseConfig, ApiConfig } from "./modules";
 
 import z from "zod";
 
@@ -32,9 +28,8 @@ function buildConfig<T extends z.ZodTypeAny = typeof zCollectorConfig>(
   if (_config) return _config as any;
 
   const normalized = normalizeEnv(env);
-  const useSchema = schema ?? zCollectorConfig;
-
-  const result = useSchema.safeParse(normalized);
+  const usedSchema = schema ?? zCollectorConfig;
+  const result = usedSchema.safeParse(normalized);
 
   if (!result.success) {
     const message = result.error.issues
@@ -53,27 +48,18 @@ function buildConfig<T extends z.ZodTypeAny = typeof zCollectorConfig>(
  * Getter for global config
  * Throws if loadConfig() was not called
  */
-function getConfig(): CollectorConfig {
+function getConfig<T>(): T {
   if (!_config) {
     throw new Error("Config has not been built yet. Call buildConfig() first.");
   }
-  return _config;
+
+  return _config as T;
 }
 
 // Only expose types + loader/getter
 export type { CollectorConfig, BaseConfig, CloudConfig, ApiConfig };
 export { buildConfig, getConfig };
 
-
-
-
-
-// export {
-//     zCollectorConfig, type CollectorConfig,
-//     zCloudConfig, type CloudConfig,
-//     zBaseConfig, type BaseConfig,
-//     zApiConfig, type ApiConfig, HttpProtocol, zPortDefault
-// }
 
 export const StrictlyParseConfig = <T>(schema: z.ZodType<T>, data: unknown): T | null => {
     const result = schema.safeParse(data);
@@ -89,52 +75,13 @@ export const StrictlyParseConfig = <T>(schema: z.ZodType<T>, data: unknown): T |
     return result.data;
 }
 
-// Enums
-const LogLevels = [
-  "error",
-  "warn",
-  "info",
-  "http",
-  "verbose",
-  "debug",
-  "silly",
-] as const;
-
-const NodeEnvs = [
-  "development",
-  "production",
-  "test",
-  "staging",
-] as const;
-
-const ServiceLocations = [
-  "site", 
-  "global"
-] as const;
-
-const CloudClients = [
-    "aws_s3"
-] as const;
-
-export const zCloudClientsList = z
-  .string()
-  .transform((str) => str.split(",").map(s => s.trim())) // split string into array
-  .refine((arr) => arr.every((c) => CloudClients.includes(c as any)), {
-    message: "Invalid cloud client specified",
-  })
-  .transform((arr) => arr.map((c) => zCloudClients.parse(c))); // parse each item
-
-export const zCloudClients = z.enum(CloudClients).default("aws_s3");
-export type CloudClient = z.infer<typeof zCloudClients>;
-
-export const zLogLevels = z.enum(LogLevels).default("info");
-export type LogLevel = z.infer<typeof zLogLevels>;
-
-export const zNodeEnvs = z.enum(NodeEnvs).default("development");
-export type NodeEnv = z.infer<typeof zNodeEnvs>;
-
-export const zServiceLocations = z.enum(ServiceLocations).default("global");
-export type ServiceLocation = z.infer<typeof zServiceLocations>;
+// export const zCloudClientsList = z
+//   .string()
+//   .transform((str) => str.split(",").map(s => s.trim())) // split string into array
+//   .refine((arr) => arr.every((c) => CloudClient.includes(c as any)), {
+//     message: "Invalid cloud client specified",
+//   })
+//   .transform((arr) => arr.map((c) => z.enum(CloudClient).parse(c))); // parse each item
 
 export const zOptionalString = z.string().optional();
 export const zValidString = z.string().min(1);

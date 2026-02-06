@@ -5,7 +5,6 @@ import { zApiConfig } from "./modules/api";
 
 export const zCollectorConfig = zBaseConfig
     .extend(zCloudConfig.shape)
-    .extend(zApiConfig.shape)
-    .strict();
+    .extend(zApiConfig.shape);
 
 export type CollectorConfig = z.infer<typeof zCollectorConfig>;

@@ -1,8 +1,5 @@
 import z from "zod";
-
-export const HttpProtocol = [ "http", "https" ] as const;
-export type HttpProtocol = typeof HttpProtocol[number];
-export const zHttpProtocol = z.enum(HttpProtocol);
+import { HttpProtocol } from "../types";
 
 export const zPortDefault = (defaultPort: number) => {
     return z.preprocess(
@@ -14,7 +11,7 @@ export const zPortDefault = (defaultPort: number) => {
 }
 
 export const zApiConfig = z.object({
-  API_PROTOCOL: zHttpProtocol,
+  API_PROTOCOL: z.enum(HttpProtocol),
   API_HOST: z.string().nonempty(),
   API_HTTP_PORT: zPortDefault(80),
   API_HTTPS_PORT: zPortDefault(443)

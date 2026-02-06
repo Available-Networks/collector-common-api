@@ -3,10 +3,8 @@ import Logger from "./logging/logger";
 import { CloudUploadClientCollection, CloudUploadOpts } from "./cloud";
 import * as fs from 'fs/promises';
 import * as path from "path";
-import { NodeEnv } from "./config";
+import type { NodeEnv } from "./config/types";
 import { AxiosError } from "axios";
-
-
 
 export const writeAxiosErrorLog = (error: AxiosError): void => {
     const route: string = error.config.url;

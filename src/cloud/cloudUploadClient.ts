@@ -1,6 +1,6 @@
 import z from "zod";
 import Logger from "../logging";
-import { StrictlyParseConfig, zServiceLocations } from "../config";
+import { ServiceLocation } from "../config/types";
 
 export type CloudUploadOpts = z.infer<typeof zCloudUploadClientOpts>;
 
@@ -15,7 +15,6 @@ export default abstract class CloudUploadClient {
         body: Buffer | Uint8Array | Blob | string,
         opts: CloudUploadOpts
     ) {
-        StrictlyParseConfig(zCloudUploadClientOpts, opts);
         await this.upload(body, opts);
     }
 
@@ -41,7 +40,7 @@ export default abstract class CloudUploadClient {
 
 const zCloudUploadClientOpts = z.object({
     filePath: z.string().optional(),
-    serviceLocation: zServiceLocations,
+    serviceLocation: z.enum(ServiceLocation),
     siteName: z.string().optional(),
     serviceName: z.string().optional(),
     dataSourceName: z.string().optional(),
