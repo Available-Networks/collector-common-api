@@ -1,4 +1,4 @@
-import { CloudConfig, CloudProvider } from "../config/cloudConfig";
+import { CloudConfig, CloudProvider } from "../config/modules/cloud";
 import Logger from "../logging";
 import AWS3UploadClient from "./clients/aws3UploadClient";
 import CloudUploadClient, { CloudUploadOpts } from "./cloudUploadClient";

@@ -6,8 +6,8 @@
     "declaration": true,
     "moduleResolution": "node",
     "skipLibCheck": true,
-    "noImplicitOverride": true
+    "noImplicitOverride": true,
   },
   "include": ["src"],
-  "exclude": ["dist", "**/*.test.ts"]
+  "exclude": ["dist", "**/*.test.ts", "node_modules"]
 }

@@ -1,18 +1,79 @@
-import { zCollectorConfig, type CollectorConfig } from "./collectorConfig";
-import { zCloudConfig, type CloudConfig } from "./cloudConfig";
-import { zBaseConfig, type BaseConfig } from "./baseConfig";
-import { zApiConfig, type ApiConfig } from "./apiConfig";
+import { zCollectorConfig, type CollectorConfig } from "./collector";
+import { zCloudConfig, type CloudConfig } from "./modules/cloud";
+import { zBaseConfig, type BaseConfig } from "./modules/base";
+import { zApiConfig, type ApiConfig } from "./modules/api";
 
-import { HttpProtocol, zPortDefault } from "./apiConfig";
+import { HttpProtocol, zPortDefault } from "./modules/api";
 
 import z from "zod";
 
-export {
-    zCollectorConfig, type CollectorConfig,
-    zCloudConfig, type CloudConfig,
-    zBaseConfig, type BaseConfig,
-    zApiConfig, type ApiConfig, HttpProtocol, zPortDefault
+// singleton storage
+let _config: CollectorConfig | null = null;
+
+/**
+ * Normalize environment variables:
+ * - "" becomes undefined
+ * - preserve undefined
+ */
+function normalizeEnv(env: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(env).map(([k, v]) => [k, v === "" ? undefined : v])
+  );
 }
+
+/**
+ * Load config and store globally
+ * Crashes immediately if invalid
+ */
+function buildConfig<T extends z.ZodTypeAny = typeof zCollectorConfig>(
+  env: Record<string, unknown> = process.env,
+  schema?: T
+): z.infer<T> {
+  if (_config) return _config as any;
+
+  const normalized = normalizeEnv(env);
+  const useSchema = schema ?? zCollectorConfig;
+
+  const result = useSchema.safeParse(normalized);
+
+  if (!result.success) {
+    const message = result.error.issues
+      .map(issue => `- [${issue.path.join(".")}] ${issue.message}`)
+      .join("\n");
+    console.error("Invalid configuration:\n" + message);
+    process.exit(1); // fail-fast
+  }
+
+  _config = Object.freeze(result.data) as any;
+  
+  return
+}
+
+/**
+ * Getter for global config
+ * Throws if loadConfig() was not called
+ */
+function getConfig(): CollectorConfig {
+  if (!_config) {
+    throw new Error("Config has not been built yet. Call buildConfig() first.");
+  }
+  return _config;
+}
+
+// Only expose types + loader/getter
+export type { CollectorConfig, BaseConfig, CloudConfig, ApiConfig };
+export { buildConfig, getConfig };
+
+
+
+
+
+// export {
+//     zCollectorConfig, type CollectorConfig,
+//     zCloudConfig, type CloudConfig,
+//     zBaseConfig, type BaseConfig,
+//     zApiConfig, type ApiConfig, HttpProtocol, zPortDefault
+// }
 
 export const StrictlyParseConfig = <T>(schema: z.ZodType<T>, data: unknown): T | null => {
     const result = schema.safeParse(data);

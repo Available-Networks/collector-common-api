@@ -21,6 +21,27 @@ export const zCloudConfig = z.object({
   // GCP placeholders
   GCP_PROJECT_ID: z.string().optional(),
   GCP_KEY_FILE: z.string().optional(),
+})
+.superRefine((cfg, ctx) => {
+  // AWS config validation
+  if (cfg.CLOUD_PROVIDERS?.includes("aws_s3")) {
+    const required = [
+      "AWS_ACCESS_KEY_ID",
+      "AWS_SECRET_ACCESS_KEY",
+      "AWS_S3_BUCKET_NAME",
+      "AWS_REGION",
+    ];
+
+    for (const key of required) {
+      if (!cfg[key]) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [key],
+          message: `${key} required when aws_s3 enabled`,
+        });
+      }
+    }
+  }
 });
 
 export type CloudConfig = z.infer<typeof zCloudConfig>;

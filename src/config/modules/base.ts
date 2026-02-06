@@ -18,4 +18,17 @@ export const zBaseConfig = z.object({
   SERVICE_LOCATION: zServiceLocations.default("site"),
   SITE_NAME: z.string().optional()
 })
+.superRefine((cfg, ctx) => {
+    if (
+        cfg.SERVICE_LOCATION === "site" &&
+        !cfg.SITE_NAME
+    ) {
+        ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["SITE_NAME"],
+        message: "SITE_NAME required when SERVICE_LOCATION=site",
+        });
+    }
+});
+    
 export type BaseConfig = z.infer<typeof zBaseConfig>;
