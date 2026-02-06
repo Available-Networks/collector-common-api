@@ -4,17 +4,20 @@ export const HttpProtocol = [ "http", "https" ] as const;
 export type HttpProtocol = typeof HttpProtocol[number];
 export const zHttpProtocol = z.enum(HttpProtocol);
 
-export const zPort = z
-    .string()
-    .default("")
-    .transform((val: string) => parseInt(val!, 10))
-    .refine((val: number) => !isNaN(val) && val > 0 && val <= 65535, {
-        message: "Invalid port number"
-    })
+export const zPortDefault = (defaultPort: number) => {
+    return z.preprocess(
+        v => (v === "" || v === undefined ? defaultPort : v),
+        z.coerce.number().refine(v => v > 0 && v <= 65535, {
+            message: "Invalid port number",
+        })
+    );
+}
 
 export const zApiConfig = z.object({
-  PROTOCOL: zHttpProtocol.default("https"),
-  HTTP_PORT: zPort.default(80).optional(),
-  HTTPS_PORT: zPort.default(443).optional()
+  PROTOCOL: zHttpProtocol.optional().default("https"),
+  API_HOST: z.string().nonempty(),
+  HTTP_PORT: zPortDefault(80),
+  HTTPS_PORT: zPortDefault(443)
 })
+
 export type ApiConfig = z.infer<typeof zApiConfig>;

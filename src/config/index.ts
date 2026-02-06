@@ -3,7 +3,7 @@ import { zCloudConfig, type CloudConfig } from "./cloudConfig";
 import { zBaseConfig, type BaseConfig } from "./baseConfig";
 import { zApiConfig, type ApiConfig } from "./apiConfig";
 
-import { HttpProtocol, zPort } from "./apiConfig";
+import { HttpProtocol, zPortDefault } from "./apiConfig";
 
 import z from "zod";
 
@@ -11,7 +11,7 @@ export {
     zCollectorConfig, type CollectorConfig,
     zCloudConfig, type CloudConfig,
     zBaseConfig, type BaseConfig,
-    zApiConfig, type ApiConfig, HttpProtocol, zPort
+    zApiConfig, type ApiConfig, HttpProtocol, zPortDefault
 }
 
 export const StrictlyParseConfig = <T>(schema: z.ZodType<T>, data: unknown): T | null => {
