@@ -37,4 +37,6 @@ data
 
 bun.lock
 
-.npmrc
+.vscode
+
+.npmrc*
