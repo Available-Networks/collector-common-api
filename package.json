@@ -14,7 +14,7 @@
   },
   "version": "1.0.0",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.985.0",
+    "@aws-sdk/client-s3": "^3.986.0",
     "axios": "^1.13.5",
     "winston": "^3.19.0",
     "zod": "^4.3.6"
