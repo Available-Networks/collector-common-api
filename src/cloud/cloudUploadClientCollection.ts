@@ -26,7 +26,7 @@ export default class CloudUploadClientCollection {
             CloudConfig.CLOUD_PROVIDERS.map((provider) => ClientBuilders[provider](CloudConfig))
         )
 
-        Logger.info("Created " + providers.length + " providers")
+        Logger.debug(`Created ${providers.length} cloud upload providers - ${providers.map(p => p.name)}`);
         return new CloudUploadClientCollection(providers);
     }
 

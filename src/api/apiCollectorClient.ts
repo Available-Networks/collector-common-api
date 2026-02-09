@@ -45,9 +45,9 @@ export default abstract class ApiCollectorClient {
 
         for (let attempt = 1; attempt <= retries; attempt++) {
             if(attempt === 1) {
-                Logger.debug(`[${config.method}] ${config.url}`);
+                Logger.http(`[${config.method}] ${config.url}`);
             } else {
-                Logger.debug(`(retry ${attempt}/${retries}) [${config.method}] ${config.url}`);
+                Logger.http(`(retry ${attempt}/${retries}) [${config.method}] ${config.url}`);
             }
 
             try {
@@ -113,10 +113,7 @@ export default abstract class ApiCollectorClient {
             };
         }
 
-        const response: AxiosResponse | null = await this
-            .requestWithRetry(options)
-            .catch(Util.printErrorAndReturnNull);
-
+        const response: AxiosResponse | null = await this.requestWithRetry(options);
         if (!response) {
             return null;
         }
