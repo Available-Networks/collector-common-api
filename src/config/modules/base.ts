@@ -11,7 +11,7 @@ export const zBaseConfig = z.object({
   LOG_LEVEL: z.enum(LogLevel).default("debug"),
   NODE_ENV: z.enum(NodeEnv).default("development"),
   SERVICE_NAME: z.string().nonempty("SERVICE_NAME is required"),
-  SERVICE_LOCATION: z.enum(ServiceLocation).default("site"),
+  SERVICE_LOCATION: z.enum(ServiceLocation).default("global"),
   SITE_NAME: z.string().optional()
 })
 .superRefine((cfg, ctx) => {
