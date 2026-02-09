@@ -4,30 +4,46 @@ import { CloudUploadClientCollection, CloudUploadOpts } from "./cloud";
 import * as fs from 'fs/promises';
 import * as path from "path";
 import type { NodeEnv } from "./config/types";
-import { AxiosError } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
+
+const commonErrorFields = [ "error", "message", "issue" ]
 
 export const writeAxiosErrorLog = (error: AxiosError): void => {
     const route: string = error.config.url;
-    const errorData: any = error.response?.data;
-    const message: string = (errorData?.message ?? error.message).trim();
-    const moreInfo = error.response?.statusText;
+    const response: AxiosResponse | undefined = error.response;
 
-    let finalMessage = `Endpoint '${route}' -> ${message}`;
+    const errorData: any = response?.data;
+    
+    // find the error messages kinda
+    let errorMessage = "";
+    if(errorData) {
+        if(errorData instanceof Object) {
+            const errorDataObject = errorData as Object;
+    
+            const errorMessages = commonErrorFields
+                .filter(field => Object.keys(errorDataObject).includes(field));
+    
+            errorMessage = (errorMessages.length < 1) 
+                ? JSON.stringify(errorDataObject, null, 2)
+                : errorMessages.join(",");
+        } else {
+            errorMessage = errorData.toString();
+        }
+    } else {
+        errorMessage = error.message;
+    }
+    
+    const moreInfo = response?.statusText;
+
+    let finalMessage = `Endpoint '${route}' (${error.status}) -> ${errorMessage}`;
     if(moreInfo !== undefined) { finalMessage += ` | ${moreInfo}`; }
 
-    switch (error.status) {
-        case 400:
-        case 403:
-        case 501: 
-            Logger.warn(finalMessage); 
-            break;
-        case 500: 
-            Logger.error(finalMessage); 
-            break;
-        default: 
-            Logger.error(`Endpoint '${route}' threw an uncaught error -> ${message} | ${moreInfo}`); 
-            break;
+    if(error.status === 400 || error.status === 403 || error.status === 501 || error.status === 500) {
+        Logger.warn(finalMessage);
+        return;
     }
+
+    Logger.error(`Endpoint '${route}' -> unexpected error (${error.status}) -> ${errorMessage} | ${moreInfo}`); 
 }
 
 export const printErrorAndReturnNull = (e: any) => {
@@ -38,8 +54,6 @@ export const printErrorAndReturnNull = (e: any) => {
     }
     return null;
 }
-
-
 
 export function zParseUsing<T>(
     schema: z.ZodType<T>,
@@ -57,7 +71,6 @@ export function zParseUsing<T>(
 
 export const cidrRegex = /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}\/(?:3[0-2]|[12]?\d)$/;
 export const ipRegex = /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
-
 
 export const hasKeys = (value: unknown): value is Record<string, unknown> => {
     return (
@@ -81,27 +94,23 @@ export const isValidData = (data: unknown): boolean => {
     }
 
     if (Array.isArray(data)) {
-        for (const datum of data) {
-            if (isValidData(datum)) return true;
-        }
-
-        return false;
+        return data.some(datum => isValidData(datum));
     } else {
-        if (hasKeys(data)) {
-            for (const datum of Object.values(data)) {
-                if (isValidData(datum)) return true;
-            }
-        }
-
-        return false;
+        return hasKeys(data) && Object.values(data).some(datum => isValidData(datum));
     }
 }
 
 export const formatDate = (d: Date): string => {
-    const pad = (n: number) => n.toString().padStart(2, "0")
+    const pad = (n: number, prefix: string = "0") => n.toString().padStart(2, prefix);
 
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_` +
-        `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+    const fullYear = d.getFullYear();
+    const month = pad(d.getMonth() + 1);
+    const fullDate = pad(d.getDate()) + "_";
+    const hours = pad(d.getHours());
+    const minutes = pad(d.getMinutes());
+    const seconds = pad(d.getSeconds());
+
+    return `${fullYear}-${month}-${fullDate}_${hours}:${minutes}:${seconds}`
 }
 
 export const exportData = async (
