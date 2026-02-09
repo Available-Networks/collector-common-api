@@ -9,12 +9,13 @@
     "./errors": "./dist/errors/index.js",
     "./logging": "./dist/logging/index.js",
     "./config": "./dist/config/index.js",
-    "./types": "./dist/config/types.js"
+    "./types": "./dist/config/types.js",
+    "./util": "./dist/util.js"
   },
   "version": "1.0.0",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.984.0",
-    "axios": "^1.13.4",
+    "@aws-sdk/client-s3": "^3.985.0",
+    "axios": "^1.13.5",
     "winston": "^3.19.0",
     "zod": "^4.3.6"
   },
