@@ -3,8 +3,10 @@ import z from "zod";
 
 import InvalidAPIResponseError from "../errors/invalidApiResponseError";
 import Logger from "../logging/logger";
+import { Util } from "..";
 
 const DEFAULT_REQUEST_TIMEOUT_SECONDS = 60;
+const MAX_RETRIES = 10;
 
 export type ApiCollectorAuthConfig = {
     headers?: AxiosHeaders;
@@ -34,6 +36,44 @@ export default abstract class ApiCollectorClient {
 
     abstract disconnect();
 
+    private async requestWithRetry<T = any>(
+        config: AxiosRequestConfig,
+        retries = 5,
+        delayMs = 1000
+    ): Promise<AxiosResponse<T>> {
+        let lastError: Error;
+
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            if(attempt === 1) {
+                Logger.debug(`[${config.method}] ${config.url}`);
+            } else {
+                Logger.debug(`(retry ${attempt}/${retries}) [${config.method}] ${config.url}`);
+            }
+
+            try {
+                return await axios(config);
+            } catch (err: any) {
+                const status = err.response?.status;
+
+                // Fail fast on 400 or 404
+                if (status === 400 || status === 404) {
+                    throw err;
+                }
+
+                // Retry only on network errors, internal server errors, or too many requests
+                if (attempt === retries || (status && status < 500 && status !== 429)) {
+                    throw err;
+                }
+
+                lastError = err;
+
+                await new Promise((res) => setTimeout(res, delayMs * 2 ** attempt)); // "exponential backoff"
+            }
+        }
+
+        throw lastError;
+    }
+
     /**
      * Generic request method.
      * Accepts full AxiosRequestConfig to allow custom headers, query params, etc.
@@ -43,11 +83,13 @@ export default abstract class ApiCollectorClient {
         endpoint: string,
         opts?: AxiosRequestConfig
     ): Promise<AxiosResponse<any, any, {}> | null> {
-        const authConfig = this.#authConfig;
-
         const url = `${this.#baseUrl}/${endpoint}`;
 
-        Logger.debug(`Attempting to send ${method} request to ${url}`);
+        let paramsStr = (opts?.params) ? `?${opts.params.toString()}` : "";
+        const decodedUriStr = decodeURIComponent(`${url}${paramsStr}`);
+
+
+        const authConfig = this.#authConfig;
         const options: AxiosRequestConfig<any> = {
             url: url,
             method,
@@ -60,22 +102,29 @@ export default abstract class ApiCollectorClient {
             ...opts,
         };
 
-        if(opts?.data) {
+        if (opts?.data) {
             options.data = { ...opts?.data }
         }
 
-        if(authConfig.body) {
+        if (authConfig.body) {
             options.data = {
                 ...authConfig.body,
                 ...options.data,
             };
         }
 
-        const response: AxiosResponse = await axios.request(options);
-        if(response.status >= 200 && response.status < 300) {
-            Logger.http(`[${method} - ${response.statusText}] ${url}`);
+        const response: AxiosResponse | null = await this
+            .requestWithRetry(options)
+            .catch(Util.printErrorAndReturnNull);
+
+        if (!response) {
+            return null;
+        }
+
+        if (response.status >= 200 && response.status < 300) {
+            Logger.http(`[${method} - ${response.statusText}] ${decodedUriStr}`);
         } else {
-            Logger.error(`[${method} - ${response.statusText}] ${url}`);
+            Logger.error(`[${method} - ${response.statusText}] ${decodedUriStr}`);
             throw new InvalidAPIResponseError(endpoint, `HTTP ${response.status} - ${response.statusText}`);
         }
 
