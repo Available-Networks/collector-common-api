@@ -9,7 +9,7 @@ describe("Base config", () => {
 
     expect(cfg.LOG_LEVEL).toBe("debug");
     expect(cfg.NODE_ENV).toBe("development");
-    expect(cfg.SERVICE_LOCATION).toBe("site");
+    expect(cfg.SERVICE_LOCATION).toBe("global");
   });
 
   test("requires service name", () => {
