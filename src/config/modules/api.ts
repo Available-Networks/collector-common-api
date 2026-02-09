@@ -3,7 +3,15 @@ import { HttpProtocol } from "../types";
 
 export const zPortDefault = (defaultPort: number) => {
     return z.preprocess(
-        v => (v === "" || v === undefined ? defaultPort : v),
+        (v) => {
+            if(v === "" || v === undefined) {
+                return defaultPort;
+            }
+
+            return (v instanceof String)
+                ? parseInt(v as string)
+                : v;
+        },
         z.coerce.number().refine(v => v > 0 && v <= 65535, {
             message: "Invalid port number",
         })
