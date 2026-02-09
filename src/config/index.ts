@@ -3,6 +3,8 @@ import type { CloudConfig, BaseConfig, ApiConfig } from "./modules";
 
 import z from "zod";
 
+export { zCollectorConfig };
+
 // singleton storage
 let _config: CollectorConfig | null = null;
 
