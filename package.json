@@ -9,6 +9,7 @@
     "./errors": "./dist/errors/index.js",
     "./logging": "./dist/logging/index.js",
     "./config": "./dist/config/index.js",
+    "./config/modules": "./dist/config/modules/index.js",
     "./types": "./dist/config/types.js",
     "./util": "./dist/util.js"
   },

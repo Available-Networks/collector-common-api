@@ -3,7 +3,6 @@ import z from "zod";
 
 import InvalidAPIResponseError from "../errors/invalidApiResponseError";
 import Logger from "../logging/logger";
-import { Util } from "..";
 
 const DEFAULT_REQUEST_TIMEOUT_SECONDS = 60;
 const MAX_RETRIES = 10;
@@ -28,7 +27,7 @@ export default abstract class ApiCollectorClient {
     get baseUrl() { return this.#baseUrl }
     get authConfig() { return this.#authConfig }
 
-    abstract getAllData(): Promise<Record<string, any>> | Record<string, any>;
+    abstract getAllData(..._args): Promise<Record<string, any>> | Record<string, any>;
 
     static async Create(..._args: any[]): Promise<ApiCollectorClient> {
         throw new Error("Create() must be implemented by subclass");
@@ -38,7 +37,7 @@ export default abstract class ApiCollectorClient {
 
     private async requestWithRetry<T = any>(
         config: AxiosRequestConfig,
-        retries = 5,
+        retries = MAX_RETRIES,
         delayMs = 1000
     ): Promise<AxiosResponse<T>> {
         let lastError: Error;

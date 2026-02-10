@@ -1,9 +1,15 @@
-import { type CloudConfig } from "./cloud";
-import { type BaseConfig } from "./base";
-import { type ApiConfig } from "./api";
+import { zCloudConfig, type CloudConfig } from "./cloud";
+import { zBaseConfig, type BaseConfig } from "./base";
+import { zApiConfig, type ApiConfig } from "./api";
 
 export type {
     CloudConfig,
     BaseConfig,
     ApiConfig
+}
+
+export {
+    zCloudConfig,
+    zBaseConfig,
+    zApiConfig
 }
