@@ -113,6 +113,24 @@ export const formatDate = (d: Date): string => {
     return `${fullYear}-${month}-${fullDate}_${hours}:${minutes}:${seconds}`
 }
 
+
+export interface FileMeta {
+    serviceName: string,
+    dataSourceName: string,
+    timeToday: string
+}
+
+export const exportDataToFile = (rootDir: string, data: any, meta: FileMeta): void => {
+    const { serviceName, dataSourceName, timeToday } = meta;
+
+    const filename = `${serviceName}-${dataSourceName}-${timeToday}.json`;
+    const filePath = path.join(rootDir, filename);
+    const serializedData = JSON.stringify(data, null, 2);
+
+    Logger.info(`Writing data source ${dataSourceName} to '${filePath}'`);
+    fs.writeFile(filePath, serializedData);
+}
+
 export const exportData = async (
     uploaders: CloudUploadClientCollection,
     theData: any,
