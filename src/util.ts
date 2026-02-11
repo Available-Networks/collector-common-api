@@ -6,8 +6,19 @@ import * as path from "path";
 import type { NodeEnv } from "./config/types";
 import { AxiosError, AxiosResponse } from "axios";
 
+// -----------------------------------------------------------------------------
+// Axios / HTTP Error Utilities
+// -----------------------------------------------------------------------------
+/**
+ * Common fields in an API error response to look for
+ */
 const commonErrorFields = [ "error", "message", "issue" ]
 
+/**
+ * Logs a formatted AxiosError to the Logger
+ *
+ * @param error - AxiosError thrown from a failed HTTP request
+ */
 export const writeAxiosErrorLog = (error: AxiosError): void => {
     const route: string = error.config.url;
     const response: AxiosResponse | undefined = error.response;
@@ -46,6 +57,12 @@ export const writeAxiosErrorLog = (error: AxiosError): void => {
     Logger.error(`Endpoint '${route}' -> unexpected error (${error.status}) -> ${errorMessage} | ${moreInfo}`); 
 }
 
+/**
+ * Logs an error (Axios or generic) and returns null
+ *
+ * @param e - Error object
+ * @returns null always
+ */
 export const printErrorAndReturnNull = (e: any) => {
     if (e.isAxiosError) {
         writeAxiosErrorLog(e as AxiosError)
@@ -55,6 +72,17 @@ export const printErrorAndReturnNull = (e: any) => {
     return null;
 }
 
+// -----------------------------------------------------------------------------
+// Zod Parsing Utility
+// -----------------------------------------------------------------------------
+/**
+ * Parses unknown data using a Zod schema and throws on invalid input
+ *
+ * @param schema - Zod schema to validate against
+ * @param data - Input data
+ * @returns Validated and parsed data
+ * @throws Error if data does not conform to schema
+ */
 export function zParseUsing<T>(
     schema: z.ZodType<T>,
     data: unknown
@@ -69,9 +97,24 @@ export function zParseUsing<T>(
     return result.data;
 }
 
+// -----------------------------------------------------------------------------
+// Regex Utilities
+// -----------------------------------------------------------------------------
+/** CIDR notation regex (e.g., "192.168.0.0/24") */
 export const cidrRegex = /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}\/(?:3[0-2]|[12]?\d)$/;
+
+/** IPv4 address regex (e.g., "192.168.0.1") */
 export const ipRegex = /^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
 
+// -----------------------------------------------------------------------------
+// Data Validation Utilities
+// -----------------------------------------------------------------------------
+/**
+ * Checks whether a value is a non-empty object
+ *
+ * @param value - Value to check
+ * @returns true if the value is a non-null object with at least one key
+ */
 export const hasKeys = (value: unknown): value is Record<string, unknown> => {
     return (
         typeof value === "object" &&
@@ -81,6 +124,12 @@ export const hasKeys = (value: unknown): value is Record<string, unknown> => {
     );
 }
 
+/**
+ * Checks whether a data object or primitive contains valid data
+ *
+ * @param data - Data to check
+ * @returns true if data is non-empty / non-null
+ */
 export const isValidData = (data: unknown): boolean => {
     if (data === undefined || data === null) {
         return false;
@@ -100,6 +149,15 @@ export const isValidData = (data: unknown): boolean => {
     }
 }
 
+// -----------------------------------------------------------------------------
+// Date Utilities
+// -----------------------------------------------------------------------------
+/**
+ * Formats a Date object into a string like "YYYY-MM-DD_DD_HH:MM:SS"
+ *
+ * @param d - Date object
+ * @returns Formatted date string
+ */
 export const formatDate = (d: Date): string => {
     const pad = (n: number, prefix: string = "0") => n.toString().padStart(2, prefix);
 
@@ -113,13 +171,23 @@ export const formatDate = (d: Date): string => {
     return `${fullYear}-${month}-${fullDate}_${hours}:${minutes}:${seconds}`
 }
 
-
+// -----------------------------------------------------------------------------
+// File Export Utilities
+// -----------------------------------------------------------------------------
+/** Metadata for file exports */
 export interface FileMeta {
     serviceName: string,
     dataSourceName: string,
     timeToday: string
 }
 
+/**
+ * Exports data to a JSON file
+ *
+ * @param rootDir - Directory to write file
+ * @param data - Data to serialize
+ * @param meta - File metadata
+ */
 export const exportDataToFile = (rootDir: string, data: any, meta: FileMeta): void => {
     const { serviceName, dataSourceName, timeToday } = meta;
 
@@ -131,9 +199,17 @@ export const exportDataToFile = (rootDir: string, data: any, meta: FileMeta): vo
     fs.writeFile(filePath, serializedData);
 }
 
+/**
+ * Exports multiple data sources to either local files or cloud storage.
+ *
+ * @param uploaders - Cloud uploader collection
+ * @param theData - Object mapping data source names to data
+ * @param nodeEnv - Node environment ("production" writes to cloud)
+ * @param uploadOpts - Options for cloud upload
+ */
 export const exportData = async (
     uploaders: CloudUploadClientCollection,
-    theData: any,
+    theData: Record<string, any>,
     nodeEnv: NodeEnv,
     uploadOpts: CloudUploadOpts
 ) => {
@@ -150,10 +226,7 @@ export const exportData = async (
 
             const serializedData = JSON.stringify(data, null, 2);
             if (isProduction) {
-                const opts: CloudUploadOpts = {
-                    ...uploadOpts,
-                    dataSourceName
-                }
+                const opts: CloudUploadOpts = { ...uploadOpts, dataSourceName };
                 uploaders.upload(serializedData, opts);
             } else {
                 const filename = `${uploadOpts.serviceName}-${dataSourceName}-${timeToday}.json`;
@@ -162,5 +235,5 @@ export const exportData = async (
                 fs.writeFile(filePath, serializedData);
             }
         })
-    )
-}
+    );
+};

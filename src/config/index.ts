@@ -5,13 +5,26 @@ import z from "zod";
 
 export { zCollectorConfig };
 
-// singleton storage
+// -----------------------------------------------------------------------------
+// Singleton storage
+// -----------------------------------------------------------------------------
+/** Holds the globally loaded CollectorConfig instance */
 let _config: CollectorConfig | null = null;
 
+
+// -----------------------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------------------
+
 /**
- * Normalize environment variables:
- * - "" becomes undefined
- * - preserve undefined
+ * Normalizes environment variables:
+ * - Empty string `""` is converted to `undefined`
+ * - `undefined` is preserved
+ *
+ * This ensures consistent handling of optional environment variables.
+ *
+ * @param env - Raw environment object (e.g., process.env)
+ * @returns Normalized copy of the environment
  */
 function normalizeEnv(env: Record<string, unknown>) {
   return Object.fromEntries(
@@ -19,9 +32,22 @@ function normalizeEnv(env: Record<string, unknown>) {
   );
 }
 
+
+// -----------------------------------------------------------------------------
+// Configuration loader / accessor
+// -----------------------------------------------------------------------------
+
 /**
- * Load config and store globally
- * Crashes immediately if invalid
+ * Builds and validates configuration from environment or provided object.
+ *
+ * - Validates using a Zod schema (default: `zCollectorConfig`)
+ * - Normalizes environment variables
+ * - Freezes the resulting config object for immutability
+ * - Crashes the process immediately on invalid configuration (fail-fast)
+ *
+ * @param env - Optional source object, defaults to `process.env`
+ * @param schema - Optional Zod schema for validation
+ * @returns Validated and frozen configuration
  */
 function buildConfig<T extends z.ZodTypeAny = typeof zCollectorConfig>(
   env: Record<string, unknown> = process.env,
@@ -47,8 +73,12 @@ function buildConfig<T extends z.ZodTypeAny = typeof zCollectorConfig>(
 }
 
 /**
- * Getter for global config
- * Throws if loadConfig() was not called
+ * Getter for the global configuration.
+ *
+ * Throws if the configuration has not been built yet.
+ *
+ * @typeParam T - Expected type of the configuration
+ * @returns The frozen configuration object
  */
 function getConfig<T>(): T {
   if (!_config) {
@@ -58,11 +88,19 @@ function getConfig<T>(): T {
   return _config as T;
 }
 
-// Only expose types + loader/getter
-export type { CollectorConfig, BaseConfig, CloudConfig, ApiConfig };
-export { buildConfig, getConfig };
+// -----------------------------------------------------------------------------
+// Type-safe parsing utility
+// -----------------------------------------------------------------------------
 
-
+/**
+ * Safely parses a configuration object using a Zod schema.
+ *
+ * Logs errors to the console and returns `null` on invalid data instead of throwing.
+ *
+ * @param schema - Zod schema to validate against
+ * @param data - Input data to validate
+ * @returns Parsed object on success, `null` on failure
+ */
 export const StrictlyParseConfig = <T>(schema: z.ZodType<T>, data: unknown): T | null => {
     const result = schema.safeParse(data);
     if(!result.success) {
@@ -77,22 +115,30 @@ export const StrictlyParseConfig = <T>(schema: z.ZodType<T>, data: unknown): T |
     return result.data;
 }
 
-// export const zCloudClientsList = z
-//   .string()
-//   .transform((str) => str.split(",").map(s => s.trim())) // split string into array
-//   .refine((arr) => arr.every((c) => CloudClient.includes(c as any)), {
-//     message: "Invalid cloud client specified",
-//   })
-//   .transform((arr) => arr.map((c) => z.enum(CloudClient).parse(c))); // parse each item
+// -----------------------------------------------------------------------------
+// Common Zod helpers
+// -----------------------------------------------------------------------------
 
+/** Optional string schema */
 export const zOptionalString = z.string().optional();
+
+/** Non-empty string schema */
 export const zValidString = z.string().min(1);
+
+/**
+ * String representing a positive number.
+ * Transforms to a `number` and validates > 0
+ */
 export const zValidNumber = z.string()
     .transform(v => parseInt(v))
     .refine(num => !isNaN(num) && num > 0);
+    
+/** Yes/no boolean schema; transforms "yes" → true, "no" → false */
 export const zYesNoBoolean = z.enum(["yes", "no"])
     .optional()
     .transform((v) => v === "yes");
+
+/** Optional date parser; converts valid input to Date, preserves undefined */
 export const zOptionalDate = z
     .preprocess(
         (val: any) => {
@@ -100,6 +146,8 @@ export const zOptionalDate = z
         },
         z.date().optional()
     )
+
+/** Required date parser; converts valid input to Date */
 export const zValidDate = z
     .preprocess(
         (val: any) => {
@@ -108,7 +156,13 @@ export const zValidDate = z
         z.date()
     )
     
+/** AWS region string; must match pattern like "us-east-1", "eu-west-1" */
 export const zAwsRegionString = zValidString.regex(/^\w{2}-[a-z]+-\d$/, {
     message: "Invalid AWS region format (e.g. us-east-1, eu-west-1)"
 })
 
+// -----------------------------------------------------------------------------
+// Exports
+// -----------------------------------------------------------------------------
+export type { CollectorConfig, BaseConfig, CloudConfig, ApiConfig };
+export { buildConfig, getConfig };
