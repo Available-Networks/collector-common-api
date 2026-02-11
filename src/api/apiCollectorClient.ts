@@ -4,9 +4,6 @@ import z from "zod";
 import InvalidAPIResponseError from "../errors/invalidApiResponseError";
 import Logger from "../logging/logger";
 
-const DEFAULT_REQUEST_TIMEOUT_SECONDS = 60;
-const MAX_RETRIES = 10;
-
 /**
  * Base abstract API collector client.
  *
@@ -19,15 +16,11 @@ const MAX_RETRIES = 10;
  * Subclasses implement API-specific logic and data retrieval.
  */
 export default abstract class ApiCollectorClient {
-    /** Base URL used for all requests. */
-    #baseUrl: string;
-    
-    /** Persistent headers shared across requests. */
-    #persistentHeaders: AxiosHeaders;
-
     /** Persistent axios object */
-    #axiosClient: AxiosInstance;
-    
+    protected axiosClient: AxiosInstance;
+
+    #MAX_RETRIES=10;
+
     /**
      * Constructs a new API client.
      *
@@ -35,25 +28,71 @@ export default abstract class ApiCollectorClient {
      * @param persistentHeaders Persistent headers to be used in every request - intended for auth
      * @param needsDisconnect Whether subclass must implement disconnect logic
      */
-    protected constructor(baseUrl: string, persistentHeaders: AxiosHeaders) {
-        this.#baseUrl = baseUrl;
-        this.#persistentHeaders = persistentHeaders;
-
-        this.#axiosClient = axios.create({
+    protected constructor(baseUrl: string, persistentHeaders: AxiosHeaders, maxRetries: number = 10) {
+        this.axiosClient = axios.create({
             baseURL: baseUrl,
             headers: {
                 "Content-Type": "application/json",
                 ...persistentHeaders
             },
-            timeout: 10 * 1000 // 10 seconds
+            timeout: 30 * 1000 // 30 seconds
         })
+
+        Logger.debug("Created axios client for base url: " + baseUrl);
+
+        this.#MAX_RETRIES = maxRetries;
+        this.initInterceptors();
     }
 
-    /** Base API URL getter. */
-    get baseUrl() { return this.#baseUrl }
-    
-    /** Persistent headers shared across requests. */
-    get persistentHeaders() { return this.#persistentHeaders }
+    private initInterceptors() {
+        const methodEmojiMap = {
+            GET: "💌",
+            POST: "📬",
+            PUT: "🔄",
+            PATCH: "🩹",
+            DELETE: "❌",
+        };
+
+        this.axiosClient.interceptors.request.use((config) => {
+            const emoji = methodEmojiMap[config.method.toUpperCase()]
+            Logger.http(`[${emoji} ${config.method.toUpperCase()}] ${config.baseURL}${config.url}`);
+            return config;
+        });
+        
+        // this.axiosClient.interceptors.response.use(async error => { 
+        //     return this.retryOrThrow(error) 
+        // })
+    }
+
+    private async retryOrThrow(error: any) {
+        const config = error.config;
+
+        if (!config) throw error;
+
+        config.__retryCount = config.__retryCount || 0;
+
+        const status = error.response?.status;
+
+        const shouldRetry =
+            (!status || status >= 500 || status === 429) &&
+            config.__retryCount < this.#MAX_RETRIES;
+
+        if (!shouldRetry) {
+            throw error;
+        }
+
+        config.__retryCount++;
+
+        const delay = 500 * 2 ** config.__retryCount;
+
+        Logger.warn(
+            `Retry ${config.__retryCount}/${this.#MAX_RETRIES} -> ${config.url}`
+        );
+
+        await new Promise(r => setTimeout(r, delay));
+
+        return this.axiosClient(config);
+    }
 
     /**
      * Collector entrypoint implemented by subclasses.
@@ -81,58 +120,6 @@ export default abstract class ApiCollectorClient {
     async disconnect() { }
 
     /**
-     * Executes an Axios request with retry and exponential backoff.
-     *
-     * Retries occur for network failures, 5xx errors, and HTTP 429.
-     * 400 and 404 responses fail immediately.
-     *
-     * @template T Response data type
-     * @param config Axios request configuration
-     * @param retries Maximum retry attempts
-     * @param delayMs Base retry delay in milliseconds
-     * @returns Axios response
-     *
-     * @throws Error When retries are exhausted or a non-retryable error occurs
-     */
-    private async requestWithRetry<T = any>(
-        config: AxiosRequestConfig,
-        retries = MAX_RETRIES,
-        delayMs = 1000
-    ): Promise<AxiosResponse<T>> {
-        let lastError: Error;
-
-        for (let attempt = 1; attempt <= retries; attempt++) {
-            if(attempt === 1) {
-                Logger.http(`[${config.method}] ${config.url}`);
-            } else {
-                Logger.http(`(retry ${attempt}/${retries}) [${config.method}] ${config.url}`);
-            }
-
-            try {
-                return await axios(config);
-            } catch (err: any) {
-                const status = err.response?.status;
-
-                // Fail fast on 400 or 404
-                if (status === 400 || status === 404) {
-                    throw err;
-                }
-
-                // Retry only on network errors, internal server errors, or too many requests
-                if (attempt === retries || (status && status < 500 && status !== 429)) {
-                    throw err;
-                }
-
-                lastError = err;
-
-                await new Promise((res) => setTimeout(res, delayMs * 2 ** attempt)); // "exponential backoff"
-            }
-        }
-
-        throw lastError;
-    }
-
-    /**
      * Performs an authenticated HTTP request.
      *
      * Automatically injects authentication headers/body and applies retry logic.
@@ -145,44 +132,27 @@ export default abstract class ApiCollectorClient {
      * @throws InvalidAPIResponseError If response status is not successful
      * @throws AxiosError if axios errors
      */
-    protected async request(
+    protected async request<T = any>(
         method: "GET" | "POST" | "PUT" | "DELETE",
         endpoint: string,
         opts?: AxiosRequestConfig
-    ): Promise<AxiosResponse<any, any, {}> | null> {
-        const url = `${this.#baseUrl}/${endpoint}`;
-
-        let paramsStr = (opts?.params) ? `?${opts.params.toString()}` : "";
-
-        const options: AxiosRequestConfig = {
-            url: url,
+    ): Promise<AxiosResponse> {
+        const response = await this.axiosClient.request<T>({
             method,
-            headers: {
-                "Content-Type": "application/json",
-                ...this.#persistentHeaders,
-                ...opts?.headers,
-            },
-            timeout: opts?.timeout ?? DEFAULT_REQUEST_TIMEOUT_SECONDS * 1000,
-            ...opts,
-        };
+            url: `/${endpoint}`,
+            ...opts
+        });
 
-        const response: AxiosResponse | null = await this.requestWithRetry(options);
-        if (!response) {
-            return null;
-        }
-
-        const decodedUriStr = decodeURIComponent(`${url}${paramsStr}`);
-        if (response.status >= 200 && response.status < 300) {
-            Logger.http(`[${method} - ${response.statusText}] ${decodedUriStr}`);
-        } else {
-            Logger.error(`[${method} - ${response.statusText}] ${decodedUriStr}`);
-            throw new InvalidAPIResponseError(endpoint, `HTTP ${response.status} - ${response.statusText}`);
+        if (response.status < 200 || response.status >= 300) {
+            throw new InvalidAPIResponseError(
+                endpoint, `HTTP ${response.status}`
+            );
         }
 
         return response;
     }
 
-    
+
     /**
      * Executes a request and validates the result with Zod.
      *
@@ -202,7 +172,7 @@ export default abstract class ApiCollectorClient {
         schema: S,
         opts?: AxiosRequestConfig
     ): Promise<z.infer<S>> {
-        const data = await this.request(method, endpoint, opts);
-        return schema.parse(data);
+        const response = await this.request(method, endpoint, opts);
+        return schema.parse(response.data);
     }
 }
