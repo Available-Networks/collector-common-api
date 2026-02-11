@@ -3,7 +3,7 @@ import Logger from "./logging/logger";
 import { CloudUploadClientCollection, CloudUploadOpts } from "./cloud";
 import * as fs from 'fs/promises';
 import * as path from "path";
-import type { NodeEnv } from "./config/types";
+import type { LogLevel, NodeEnv } from "./config/types";
 import { AxiosError, AxiosResponse } from "axios";
 
 // -----------------------------------------------------------------------------
@@ -19,8 +19,8 @@ const commonErrorFields = [ "error", "message", "issue" ]
  *
  * @param error - AxiosError thrown from a failed HTTP request
  */
-export const writeAxiosErrorLog = (error: AxiosError): void => {
-    const route: string = error.config.url;
+export const writeAxiosErrorLog = (error: AxiosError): [LogLevel, string] => {
+    const route: string = error.config?.url;
     const response: AxiosResponse | undefined = error.response;
 
     const errorData: any = response?.data;
@@ -50,11 +50,11 @@ export const writeAxiosErrorLog = (error: AxiosError): void => {
     if(moreInfo !== undefined) { finalMessage += ` | ${moreInfo}`; }
 
     if(error.status === 400 || error.status === 403 || error.status === 501 || error.status === 500) {
-        Logger.warn(finalMessage);
-        return;
+        return ["warn", finalMessage]
     }
 
-    Logger.error(`Endpoint '${route}' -> unexpected error (${error.status}) -> ${errorMessage} | ${moreInfo}`); 
+    finalMessage = `Endpoint '${route}' -> unexpected error (${error.status}) -> ${errorMessage} | ${moreInfo}`
+    return [ "error", finalMessage ]
 }
 
 /**
@@ -64,11 +64,8 @@ export const writeAxiosErrorLog = (error: AxiosError): void => {
  * @returns null always
  */
 export const printErrorAndReturnNull = (e: any) => {
-    if (e.isAxiosError) {
-        writeAxiosErrorLog(e as AxiosError)
-    } else {
-        Logger.error("Unexpected error was thrown when trying to get node data: " + e.message);
-    }
+    const [ logLevel, message ] = writeAxiosErrorLog(e as AxiosError)
+    Logger.logWithLevel(message, logLevel);
     return null;
 }
 

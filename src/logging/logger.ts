@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as winston from 'winston';
+import { LogLevel } from "../config/types";
 
 // -----------------------------------------------------------------------------
 // Emoji mapping per log level
@@ -139,6 +140,18 @@ export default class Logger {
   // -------------------------------------------------------------------------
   // Level-specific logging methods
   // -------------------------------------------------------------------------
+  public static logWithLevel(message: string, logLevel: LogLevel) {
+    switch(logLevel) {
+      case "verbose": this.verbose(message); break;
+      case "silly": this.silly(message); break;
+      case "debug": this.debug(message); break;
+      case "error": this.error(message); break;
+      case "http": this.http(message); break;
+      case "warn": this.warn(message); break;
+      case "info": this.info(message); break;
+    }
+  }
+
   public static verbose(message: string): void { this._logger.verbose(message) }
   public static silly(message: string): void { this._logger.silly(message) }
   public static debug(message: string): void { this._logger.debug(message) }
