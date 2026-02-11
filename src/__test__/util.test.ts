@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { hasKeys, isValidData } from "../src/util";
+import { hasKeys, isValidData } from '../util';
 
 describe("hasKeys", () => {
     it("returns false for null and undefined", () => {
