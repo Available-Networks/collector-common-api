@@ -1,4 +1,4 @@
 import * as Util from './utils/util';
-import Logger from './logging/logger';
+import * as Logging from './logging'
 
-export { Util, Logger };
+export { Util, Logging };

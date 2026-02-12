@@ -3,7 +3,7 @@ import z from "zod";
 
 import CloudUploadClient, { CloudUploadOpts } from "../cloudUploadClient";
 import { formatDate } from "../../utils";
-import Logger from "../../logging";
+import {LoggerFactory} from "../../logging/logger";
 
 /**
  * Cached formatted date used when auto-generating filenames.
@@ -148,7 +148,9 @@ export default class AWS3UploadClient extends CloudUploadClient {
         });
 
         await this.#s3Client!.send(command);
-        Logger.info(`Successfully uploaded to S3 🪣  s3://${this.#bucketName}/${filePath}`);
+
+        const logger = LoggerFactory.GetLogger();
+        logger.info(`Successfully uploaded to S3 🪣  s3://${this.#bucketName}/${filePath}`);
     }
 
     /**

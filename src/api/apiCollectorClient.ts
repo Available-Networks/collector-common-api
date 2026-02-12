@@ -9,7 +9,7 @@ import axios, {
 import z from "zod";
 
 import { InvalidAPIResponseError } from "../errors";
-import Logger from "../logging";
+import { LoggerFactory } from "../logging/logger";
 
 
 /**
@@ -46,8 +46,6 @@ export default abstract class ApiCollectorClient {
             timeout: 30 * 1000 // 30 seconds
         })
 
-        Logger.debug("Created axios client for base url: " + baseUrl);
-
         this.#MAX_RETRIES = maxRetries;
         this.initInterceptors();
     }
@@ -63,7 +61,7 @@ export default abstract class ApiCollectorClient {
 
         this.axiosClient.interceptors.request.use((config) => {
             const emoji = methodEmojiMap[config.method.toUpperCase()]
-            Logger.http(`[${emoji} ${config.method.toUpperCase()}] ${config.baseURL}${config.url}`);
+            LoggerFactory.GetLogger().info(`[${emoji} ${config.method.toUpperCase()}] ${config.baseURL}${config.url}`);
             return config;
         });
         
@@ -93,7 +91,7 @@ export default abstract class ApiCollectorClient {
 
         const delay = 500 * 2 ** config.__retryCount;
 
-        Logger.warn(
+        LoggerFactory.GetLogger().warn(
             `Retry ${config.__retryCount}/${this.#MAX_RETRIES} -> ${config.url}`
         );
 

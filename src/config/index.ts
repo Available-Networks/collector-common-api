@@ -1,3 +1,4 @@
+import {LoggerFactory} from "../logging/logger";
 import { CollectorConfig, zCollectorConfig } from "./collector";
 import z from "zod";
 
@@ -64,7 +65,8 @@ export function buildConfig<T extends z.ZodTypeAny = typeof zCollectorConfig>(
     const message = result.error.issues
       .map(issue => `- [${issue.path.join(".")}] ${issue.message}`)
       .join("\n");
-    console.error("Invalid configuration:\n" + message);
+    
+    LoggerFactory.GetLogger().error("Invalid configuration:\n" + message);
     process.exit(1); // fail-fast
   }
 
@@ -109,7 +111,7 @@ export const StrictlyParseConfig = <T>(schema: z.ZodType<T>, data: unknown): T |
             .map((issue) => `- [${issue.path.join(".")}] ${issue.message}`)
             .join("\n");
 
-        console.error(`Invalid or missing configuration variables:\n${err}`)
+        LoggerFactory.GetLogger().error(`Invalid or missing configuration variables:\n${err}`)
         return null;
     }
 

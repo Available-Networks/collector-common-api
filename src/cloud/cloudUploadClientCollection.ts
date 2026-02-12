@@ -1,7 +1,7 @@
 import { CloudConfig } from "../config";
-import Logger from "../logging";
 import { AWS3UploadClient } from "./clients";
 import CloudUploadClient, { CloudProvider, CloudUploadOpts } from "./cloudUploadClient";
+import {LoggerFactory} from "../logging/logger";
 
 /**
  * Maps configured cloud providers to their respective client builders.
@@ -66,7 +66,7 @@ export default class CloudUploadClientCollection {
             CloudConfig.CLOUD_PROVIDERS.map((provider) => ClientBuilders[provider](CloudConfig))
         )
 
-        Logger.debug(`Created ${providers.length} cloud upload providers - ${providers.map(p => p.name)}`);
+        LoggerFactory.GetLogger().debug(`Created ${providers.length} cloud upload providers - ${providers.map(p => p.name)}`);
         return new CloudUploadClientCollection(providers);
     }
 
@@ -96,10 +96,11 @@ export default class CloudUploadClientCollection {
      * @param opts - Upload options
      */
     async upload(data: Buffer | string, opts: CloudUploadOpts) {
+        const logger = LoggerFactory.GetLogger();
         await Promise.all(
             this.#clients.map(client => 
                 client.uploadFile(data, opts)
-                    .catch((e: any) => Logger.error(`Failed to upload to ${client.name} - ${e.message}`))
+                    .catch((e: any) => logger.error(`Failed to upload to ${client.name} - ${e.message}`))
             )
         )
     }
@@ -108,9 +109,10 @@ export default class CloudUploadClientCollection {
      * Disconnects all managed clients and releases resources.
      */
     DisconnectClients() {
+        const logger = LoggerFactory.GetLogger();
         this.#clients.forEach(client => {
             client.Disconnect();
-            Logger.debug(`Client ${client.name} destroyed`);
+            logger.debug(`Client ${client.name} destroyed`);
         });
     }
 }

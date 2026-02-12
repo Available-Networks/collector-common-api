@@ -2,7 +2,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { CloudUploadClientCollection, CloudUploadOpts } from '../cloud';
 import { NodeEnv } from '../config/types';
-import { type Logger } from '../logging';
+import { LoggerFactory, type Logger } from '../logging';
 import { formatDate, isValidData } from './util';
 
 export interface FileMeta {
@@ -43,6 +43,8 @@ export const exportData = async (
     nodeEnv: NodeEnv,
     uploadOpts: CloudUploadOpts
 ) => {
+    const logger = LoggerFactory.GetLogger();
+
     const timeToday = formatDate(new Date());
     const longestName = Math.max(...Object.keys(theData).map(n => n.length));
     const isProduction = nodeEnv === "production";
@@ -50,7 +52,7 @@ export const exportData = async (
     await Promise.all(
         Object.entries(theData).map(([dataSourceName, data]) => {
             if (!isValidData(data)) {
-                console.warn(`Data source '${dataSourceName}' returned no data`, "warn");
+                logger.warn(`Data source '${dataSourceName}' returned no data`);
                 return null;
             }
 
@@ -62,7 +64,7 @@ export const exportData = async (
                 const filename = `${uploadOpts.serviceName}-${dataSourceName}-${timeToday}.json`;
                 const filePath = path.join("data", filename);
 
-                console.info(`Writing data source ${dataSourceName.padEnd(longestName + 1)} to '${filePath}'`, "info");
+                logger.info(`Writing data source ${dataSourceName.padEnd(longestName + 1)} to '${filePath}'`);
                 exportDataToFile("data", serializedData, {
                     dataSourceName: dataSourceName,
                     serviceName: uploadOpts.serviceName,
