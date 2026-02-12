@@ -41,17 +41,16 @@ export const exportData = async (
     uploaders: CloudUploadClientCollection,
     theData: Record<string, any>,
     nodeEnv: NodeEnv,
-    uploadOpts: CloudUploadOpts,
-    logger: Logger
+    uploadOpts: CloudUploadOpts
 ) => {
     const timeToday = formatDate(new Date());
     const longestName = Math.max(...Object.keys(theData).map(n => n.length));
     const isProduction = nodeEnv === "production";
-``
+
     await Promise.all(
         Object.entries(theData).map(([dataSourceName, data]) => {
             if (!isValidData(data)) {
-                logger.logWithLevel(`Data source '${dataSourceName}' returned no data`, "warn");
+                console.warn(`Data source '${dataSourceName}' returned no data`, "warn");
                 return null;
             }
 
@@ -63,7 +62,7 @@ export const exportData = async (
                 const filename = `${uploadOpts.serviceName}-${dataSourceName}-${timeToday}.json`;
                 const filePath = path.join("data", filename);
 
-                logger.logWithLevel(`Writing data source ${dataSourceName.padEnd(longestName + 1)} to '${filePath}'`, "info");
+                console.info(`Writing data source ${dataSourceName.padEnd(longestName + 1)} to '${filePath}'`, "info");
                 exportDataToFile("data", serializedData, {
                     dataSourceName: dataSourceName,
                     serviceName: uploadOpts.serviceName,
