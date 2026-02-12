@@ -51,15 +51,3 @@ export const writeAxiosErrorLog = (error: AxiosError): [LogLevel, string] => {
     finalMessage = `Endpoint '${route}' -> unexpected error (${error.status}) -> ${errorMessage} | ${moreInfo}`
     return [ "error", finalMessage ]
 }
-
-/**
- * Logs an error (Axios or generic) and returns null
- *
- * @param e - Error object
- * @returns null always
- */
-export const printErrorAndReturnNull = (e: any, logger: Logger) => {
-    const [ logLevel, message ] = writeAxiosErrorLog(e as AxiosError)
-    logger.logWithLevel(message, logLevel);
-    return null;
-}
