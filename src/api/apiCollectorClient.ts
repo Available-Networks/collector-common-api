@@ -1,8 +1,16 @@
-import axios, { AxiosHeaders, AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from "axios";
+import axios, { 
+    AxiosHeaders,
+    AxiosInstance,
+    Method,
+    type AxiosRequestConfig,
+    type AxiosResponse 
+} from "axios";
+
 import z from "zod";
 
-import InvalidAPIResponseError from "../errors/invalidApiResponseError";
-import Logger from "../logging/logger";
+import { InvalidAPIResponseError } from "../errors";
+import Logger from "../logging";
+
 
 /**
  * Base abstract API collector client.
@@ -133,7 +141,7 @@ export default abstract class ApiCollectorClient {
      * @throws AxiosError if axios errors
      */
     protected async request<T = any>(
-        method: "GET" | "POST" | "PUT" | "DELETE",
+        method: Method,
         endpoint: string,
         opts?: AxiosRequestConfig
     ): Promise<AxiosResponse> {

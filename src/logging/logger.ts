@@ -1,6 +1,12 @@
 import * as fs from "fs";
 import * as winston from 'winston';
-import { LogLevel } from "../config/types";
+
+/**
+ * Valid log levels used by the service logger.
+ */
+export const LogLevel = ["error", "warn", "info", "http", "verbose", "debug", "silly"] as const;
+export type LogLevel = typeof LogLevel[number];
+
 
 // -----------------------------------------------------------------------------
 // Emoji mapping per log level
@@ -140,15 +146,15 @@ export default class Logger {
   // -------------------------------------------------------------------------
   // Level-specific logging methods
   // -------------------------------------------------------------------------
-  public static logWithLevel(message: string, logLevel: LogLevel) {
+  public logWithLevel(message: string, logLevel: LogLevel) {
     switch(logLevel) {
-      case "verbose": this.verbose(message); break;
-      case "silly": this.silly(message); break;
-      case "debug": this.debug(message); break;
-      case "error": this.error(message); break;
-      case "http": this.http(message); break;
-      case "warn": this.warn(message); break;
-      case "info": this.info(message); break;
+      case "verbose": Logger.verbose(message); break;
+      case "silly": Logger.silly(message); break;
+      case "debug": Logger.debug(message); break;
+      case "error": Logger.error(message); break;
+      case "http": Logger.http(message); break;
+      case "warn": Logger.warn(message); break;
+      case "info": Logger.info(message); break;
     }
   }
 

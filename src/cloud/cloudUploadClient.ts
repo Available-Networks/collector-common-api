@@ -3,6 +3,14 @@ import Logger from "../logging";
 import { ServiceLocation } from "../config/types";
 
 /**
+ * Available cloud provider clients.
+ *
+ * Extend this array as new cloud backends are supported.
+ */
+export const CloudProvider = ["aws_s3" ] as const;
+export type CloudProvider = typeof CloudProvider[number];
+
+/**
  * Options used when uploading data via a {@link CloudUploadClient}.
  *
  * These options either:

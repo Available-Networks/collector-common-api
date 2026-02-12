@@ -1,10 +1,11 @@
 import z from "zod";
 
 import {
-    LogLevel,
     NodeEnv,
     ServiceLocation
 } from '../types';
+
+import { LogLevel } from "../../logging";
 
 /**
  * Base configuration schema shared across all services.
