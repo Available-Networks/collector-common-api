@@ -146,7 +146,7 @@ export default class Logger {
   // -------------------------------------------------------------------------
   // Level-specific logging methods
   // -------------------------------------------------------------------------
-  public logWithLevel(message: string, logLevel: LogLevel) {
+  public static logWithLevel(message: string, logLevel: LogLevel) {
     switch(logLevel) {
       case "verbose": Logger.verbose(message); break;
       case "silly": Logger.silly(message); break;
