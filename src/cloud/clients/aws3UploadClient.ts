@@ -1,8 +1,9 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import CloudUploadClient, { CloudUploadOpts } from "../cloudUploadClient";
-import { formatDate } from "../../util";
 import z from "zod";
-import Logger from "../../logging";
+
+import CloudUploadClient, { CloudUploadOpts } from "../cloudUploadClient";
+import { formatDate } from "../../utils";
+import {LoggerFactory} from "../../logging/logger";
 
 /**
  * Cached formatted date used when auto-generating filenames.
@@ -147,7 +148,9 @@ export default class AWS3UploadClient extends CloudUploadClient {
         });
 
         await this.#s3Client!.send(command);
-        Logger.info(`Successfully uploaded to S3 🪣  s3://${this.#bucketName}/${filePath}`);
+
+        const logger = LoggerFactory.GetLogger();
+        logger.info(`Successfully uploaded to S3 🪣  s3://${this.#bucketName}/${filePath}`);
     }
 
     /**

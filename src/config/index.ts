@@ -1,9 +1,11 @@
-import { zCollectorConfig, type CollectorConfig } from "./collector";
-import type { CloudConfig, BaseConfig, ApiConfig } from "./modules";
-
+import {LoggerFactory} from "../logging/logger";
+import { CollectorConfig, zCollectorConfig } from "./collector";
 import z from "zod";
 
-export { zCollectorConfig };
+export * from './collector';
+export * from './modules';
+export * from './types';
+
 
 // -----------------------------------------------------------------------------
 // Singleton storage
@@ -49,7 +51,7 @@ function normalizeEnv(env: Record<string, unknown>) {
  * @param schema - Optional Zod schema for validation
  * @returns Validated and frozen configuration
  */
-function buildConfig<T extends z.ZodTypeAny = typeof zCollectorConfig>(
+export function buildConfig<T extends z.ZodTypeAny = typeof zCollectorConfig>(
   env: Record<string, unknown> = process.env,
   schema?: T
 ): z.infer<T> {
@@ -63,13 +65,12 @@ function buildConfig<T extends z.ZodTypeAny = typeof zCollectorConfig>(
     const message = result.error.issues
       .map(issue => `- [${issue.path.join(".")}] ${issue.message}`)
       .join("\n");
+    
     console.error("Invalid configuration:\n" + message);
     process.exit(1); // fail-fast
   }
 
   _config = Object.freeze(result.data) as any;
-  
-  return
 }
 
 /**
@@ -80,7 +81,7 @@ function buildConfig<T extends z.ZodTypeAny = typeof zCollectorConfig>(
  * @typeParam T - Expected type of the configuration
  * @returns The frozen configuration object
  */
-function getConfig<T>(): T {
+export function getConfig<T>(): T {
   if (!_config) {
     throw new Error("Config has not been built yet. Call buildConfig() first.");
   }
@@ -108,7 +109,7 @@ export const StrictlyParseConfig = <T>(schema: z.ZodType<T>, data: unknown): T |
             .map((issue) => `- [${issue.path.join(".")}] ${issue.message}`)
             .join("\n");
 
-        console.error(`Invalid or missing configuration variables:\n${err}`)
+        LoggerFactory.GetLogger().error(`Invalid or missing configuration variables:\n${err}`)
         return null;
     }
 
@@ -160,9 +161,3 @@ export const zValidDate = z
 export const zAwsRegionString = zValidString.regex(/^\w{2}-[a-z]+-\d$/, {
     message: "Invalid AWS region format (e.g. us-east-1, eu-west-1)"
 })
-
-// -----------------------------------------------------------------------------
-// Exports
-// -----------------------------------------------------------------------------
-export type { CollectorConfig, BaseConfig, CloudConfig, ApiConfig };
-export { buildConfig, getConfig };

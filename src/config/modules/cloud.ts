@@ -1,7 +1,8 @@
 import z from "zod";
 
-import { CloudProvider } from "../types";
 import { AWS3UploadClient } from "../../cloud";
+import { CloudProvider } from "../../cloud/cloudUploadClient";
+
 
 /**
  * Maps each supported cloud provider to its configuration validator.

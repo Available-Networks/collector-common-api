@@ -1,6 +1,11 @@
 import * as fs from "fs";
 import * as winston from 'winston';
-import { LogLevel } from "../config/types";
+
+/**
+ * Valid log levels used by the service logger.
+ */
+export const LogLevel = ["error", "warn", "info", "http", "verbose", "debug", "silly"] as const;
+export type LogLevel = typeof LogLevel[number];
 
 // -----------------------------------------------------------------------------
 // Emoji mapping per log level
@@ -71,41 +76,21 @@ export function toAscii(input: string): string {
 }
 
 // -----------------------------------------------------------------------------
-// Logger
+// Logger Instance Class
 // -----------------------------------------------------------------------------
 /**
- * Singleton logger class wrapping Winston.
- *
- * Supports:
- * - Console logging with emojis and timestamps
- * - Optional CSV file logging
- * - Global mute/unmute
- * @example
- * ```ts
- * Logger.CreateLogger("debug", "logs/app.csv");
- * Logger.info("Service started");
- * Logger.error("Something went wrong");
- * ```
+ * Logger instance with type-safe logging methods.
+ * 
+ * Cannot be constructed directly - use LoggerFactory.CreateLogger()
  */
-export default class Logger {
-  /** Singleton Winston logger instance */
-  public static _logger: winston.Logger;
-
-  /** Path to the CSV log file, if any */
-  private static _logFilePath: string;
+export class Logger {
+  private _logger: winston.Logger;
+  private _logFilePath?: string;
 
   /**
-     * Initializes the logger singleton.
-     *
-     * @param level - Minimum log level (default: "info")
-     * @param logFileName - Optional CSV file path for file logging
-     * @returns `null` if the logger already exists
-     */
-  public static CreateLogger = (level: string = "info", logFileName?: string) => {
-    if (this._logger) {
-      return null;
-    }
-
+   * @internal - Use LoggerFactory.CreateLogger() instead
+   */
+  constructor(level: string, logFileName?: string) {
     // create base console transport
     const transports: winston.transport[] = [
       new winston.transports.Console({ format: consoleFormat }),
@@ -116,7 +101,7 @@ export default class Logger {
       writeCsvHeaders(logFileName);
       transports.push(
         new winston.transports.File({
-          filename: logFileName!,
+          filename: logFileName,
           format: csvFileFormat,
         })
       );
@@ -128,35 +113,150 @@ export default class Logger {
   }
 
   /** Returns whether logging is currently muted */
-  public static get muted(): boolean {
-    return this._logger.silent
+  public get muted(): boolean {
+    return this._logger.silent;
+  }
+
+  /** Returns the log file path if one was configured */
+  public get logFilePath(): string | undefined {
+    return this._logFilePath;
   }
 
   /** Mute all logging */
-  public static mute(): void { this._logger.silent = true }
+  public mute(): void {
+    this._logger.silent = true;
+  }
+
   /** Unmute all logging */
-  public static unmute(): void { this._logger.silent = false }
+  public unmute(): void {
+    this._logger.silent = false;
+  }
+
+  /** Set the minimum log level */
+  public setLevel(level: LogLevel): void {
+    this._logger.level = level;
+  }
 
   // -------------------------------------------------------------------------
   // Level-specific logging methods
   // -------------------------------------------------------------------------
-  public static logWithLevel(message: string, logLevel: LogLevel) {
-    switch(logLevel) {
-      case "verbose": this.verbose(message); break;
-      case "silly": this.silly(message); break;
-      case "debug": this.debug(message); break;
-      case "error": this.error(message); break;
-      case "http": this.http(message); break;
-      case "warn": this.warn(message); break;
-      case "info": this.info(message); break;
-    }
+  public logWithLevel(message: string, logLevel: LogLevel): void {
+    this._logger.log(logLevel, message);
   }
 
-  public static verbose(message: string): void { this._logger.verbose(message) }
-  public static silly(message: string): void { this._logger.silly(message) }
-  public static debug(message: string): void { this._logger.debug(message) }
-  public static error(message: string): void { this._logger.error(message) }
-  public static http(message: string): void { this._logger.http(message) }
-  public static warn(message: string): void { this._logger.warn(message) }
-  public static info(message: string): void { this._logger.info(message) }
+  public log(logLevel: LogLevel, message: string) {
+    this._logger.log(logLevel, message);
+  }
+
+  public verbose(message: string): void {
+    this._logger.verbose(message);
+  }
+
+  public silly(message: string): void {
+    this._logger.silly(message);
+  }
+
+  public debug(message: string): void {
+    this._logger.debug(message);
+  }
+
+  public error(message: string): void {
+    this._logger.error(message);
+  }
+
+  public http(message: string): void {
+    this._logger.http(message);
+  }
+
+  public warn(message: string): void {
+    this._logger.warn(message);
+  }
+
+  public info(message: string): void {
+    this._logger.info(message);
+  }
+
+  public success(message: string): void {
+    this._logger.info(`✅  ${message}`)
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Logger Factory (Singleton Manager)
+// -----------------------------------------------------------------------------
+/**
+ * Factory for creating and managing the application logger singleton.
+ * 
+ * @example
+ * ```ts
+ * // In your app entry point (index.ts, main.ts)
+ * import { LoggerFactory } from './logging/logger';
+ * 
+ * LoggerFactory.CreateLogger("debug", "logs/app.csv");
+ * 
+ * // In other files
+ * import { LoggerFactory } from './logging/logger';
+ * 
+ * const logger = LoggerFactory.GetLogger();
+ * logger.info("Service started");
+ * logger.error("Something went wrong");
+ * ```
+ */
+export class LoggerFactory {
+  private static instance: Logger | null = null;
+
+  static #printedNoLogger = false;
+
+  /**
+   * Creates the singleton logger instance.
+   * 
+   * @param level - Minimum log level (default: "info")
+   * @param logFileName - Optional CSV file path for file logging
+   * @returns The logger instance
+   * @throws Error if logger has already been created
+   */
+  public static CreateLogger(level: LogLevel = "info", logFileName?: string): Logger {
+    if (this.instance) {
+      throw new Error(
+        "Logger already initialized. Use LoggerFactory.GetLogger() to access the existing instance."
+      );
+    }
+
+    this.instance = new Logger(level, logFileName);
+    return this.instance;
+  }
+
+  /**
+   * Gets the singleton logger instance.
+   * 
+   * @returns The logger instance
+   * @throws Error if logger hasn't been created yet
+   */
+  public static GetLogger(): Logger {
+    if (!this.instance) {
+      throw new Error(
+        "Logger not initialized. Call LoggerFactory.CreateLogger() first."
+      );
+    }
+
+    return this.instance;
+  }
+
+  /**
+   * Checks if the logger has been initialized.
+   * 
+   * @returns true if logger exists
+   */
+  public static HasLogger(): boolean {
+    return this.instance !== null;
+  }
+
+  /**
+   * Resets the logger instance (useful for testing).
+   * 
+   * @internal
+   */
+  public static Reset(): void {
+    this.instance = null;
+  }
 }

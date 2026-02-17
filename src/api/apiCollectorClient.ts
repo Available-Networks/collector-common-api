@@ -1,8 +1,16 @@
-import axios, { AxiosHeaders, AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from "axios";
+import axios, { 
+    AxiosHeaders,
+    AxiosInstance,
+    Method,
+    type AxiosRequestConfig,
+    type AxiosResponse 
+} from "axios";
+
 import z from "zod";
 
-import InvalidAPIResponseError from "../errors/invalidApiResponseError";
-import Logger from "../logging/logger";
+import { InvalidAPIResponseError } from "../errors";
+import { LoggerFactory } from "../logging/logger";
+
 
 /**
  * Base abstract API collector client.
@@ -38,8 +46,6 @@ export default abstract class ApiCollectorClient {
             timeout: 30 * 1000 // 30 seconds
         })
 
-        Logger.debug("Created axios client for base url: " + baseUrl);
-
         this.#MAX_RETRIES = maxRetries;
         this.initInterceptors();
     }
@@ -55,7 +61,14 @@ export default abstract class ApiCollectorClient {
 
         this.axiosClient.interceptors.request.use((config) => {
             const emoji = methodEmojiMap[config.method.toUpperCase()]
-            Logger.http(`[${emoji} ${config.method.toUpperCase()}] ${config.baseURL}${config.url}`);
+            const { baseURL, url, params } = config;
+
+            let paramStr = params
+                ? "?" + new URLSearchParams(params).toString()
+                : "";
+            
+            const finalURL = baseURL + url + paramStr
+            LoggerFactory.GetLogger().http(`[${emoji} ${config.method.toUpperCase()}] ${finalURL}`);
             return config;
         });
         
@@ -85,7 +98,7 @@ export default abstract class ApiCollectorClient {
 
         const delay = 500 * 2 ** config.__retryCount;
 
-        Logger.warn(
+        LoggerFactory.GetLogger().warn(
             `Retry ${config.__retryCount}/${this.#MAX_RETRIES} -> ${config.url}`
         );
 
@@ -133,7 +146,7 @@ export default abstract class ApiCollectorClient {
      * @throws AxiosError if axios errors
      */
     protected async request<T = any>(
-        method: "GET" | "POST" | "PUT" | "DELETE",
+        method: Method,
         endpoint: string,
         opts?: AxiosRequestConfig
     ): Promise<AxiosResponse> {

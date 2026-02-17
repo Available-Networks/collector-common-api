@@ -6,4 +6,9 @@ export enum CloudUploadClientType {
     AWS3
 }
 
-export { CloudUploadClient, AWS3UploadClient, CloudUploadClientCollection, type CloudUploadOpts };
+export { 
+    CloudUploadClient,
+    AWS3UploadClient,
+    CloudUploadClientCollection,
+    type CloudUploadOpts 
+};

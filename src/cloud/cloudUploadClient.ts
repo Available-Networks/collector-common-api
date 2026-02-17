@@ -1,6 +1,15 @@
 import z from "zod";
-import Logger from "../logging";
 import { ServiceLocation } from "../config/types";
+
+import { LoggerFactory } from "../logging/logger";
+
+/**
+ * Available cloud provider clients.
+ *
+ * Extend this array as new cloud backends are supported.
+ */
+export const CloudProvider = ["aws_s3" ] as const;
+export type CloudProvider = typeof CloudProvider[number];
 
 /**
  * Options used when uploading data via a {@link CloudUploadClient}.
@@ -36,7 +45,7 @@ export default abstract class CloudUploadClient {
      * Human-readable client name.
      */
     #name: string;
-    
+
     /**
      * Creates a cloud upload client.
      *
@@ -44,7 +53,7 @@ export default abstract class CloudUploadClient {
      *
      * @param name - Display name of the upload provider
      */
-    protected constructor(name: string) { this.#name = name }
+    protected constructor(name: string) { this.#name = name; }
     
     /**
      * Returns the provider name.
@@ -141,13 +150,15 @@ const zCloudUploadClientOpts = z.object({
     filename: z.string().optional()
 })
 .superRefine((data, ctx) => {
+    const logger = LoggerFactory.GetLogger();
+
     // If filePath is provided, skip metadata validation
     if(data.filePath) {
-        if(data.serviceLocation) { Logger.debug("Using filePath argument for uploading; skipping 'serviceLocation'") }
-        if(data.siteName) { Logger.debug("Using filePath argument for uploading; skipping 'siteName'") }
-        if(data.serviceName) { Logger.debug("Using filePath argument for uploading; skipping 'serviceName'") }
-        if(data.dataSourceName) { Logger.debug("Using filePath argument for uploading; skipping 'dataSourceName'") }
-        if(data.filename) { Logger.debug("Using filePath argument for uploading; skipping 'filename'") }
+        if(data.serviceLocation) { logger.debug("Using filePath argument for uploading; skipping 'serviceLocation'") }
+        if(data.siteName) { logger.debug("Using filePath argument for uploading; skipping 'siteName'") }
+        if(data.serviceName) { logger.debug("Using filePath argument for uploading; skipping 'serviceName'") }
+        if(data.dataSourceName) { logger.debug("Using filePath argument for uploading; skipping 'dataSourceName'") }
+        if(data.filename) { logger.debug("Using filePath argument for uploading; skipping 'filename'") }
         return;
     }
 
