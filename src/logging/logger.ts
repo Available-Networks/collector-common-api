@@ -144,6 +144,10 @@ export class Logger {
     this._logger.log(logLevel, message);
   }
 
+  public log(logLevel: LogLevel, message: string) {
+    this._logger.log(logLevel, message);
+  }
+
   public verbose(message: string): void {
     this._logger.verbose(message);
   }
@@ -170,6 +174,10 @@ export class Logger {
 
   public info(message: string): void {
     this._logger.info(message);
+  }
+
+  public success(message: string): void {
+    this._logger.info(`✅  ${message}`)
   }
 }
 

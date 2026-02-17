@@ -25,7 +25,7 @@ export const exportDataToFile = (rootDir: string, data: any, meta: FileMeta): vo
     const filePath = path.join(rootDir, filename);
     const serializedData = JSON.stringify(data, null, 2);
 
-    fs.writeFile(filePath, serializedData);
+    fs.writeFile(filePath, serializedData, "utf-8");
 }
 
 
@@ -53,23 +53,24 @@ export const exportData = async (
         Object.entries(theData).map(([dataSourceName, data]) => {
             if (!isValidData(data)) {
                 logger.warn(`Data source '${dataSourceName}' returned no data`);
-                return null;
+                return;
             }
 
-            const serializedData = JSON.stringify(data, null, 2);
             if (isProduction) {
                 const opts: CloudUploadOpts = { ...uploadOpts, dataSourceName };
+                const serializedData = JSON.stringify(data, null, 2);
                 uploaders.upload(serializedData, opts);
             } else {
                 const filename = `${uploadOpts.serviceName}-${dataSourceName}-${timeToday}.json`;
                 const filePath = path.join("data", filename);
 
                 logger.info(`Writing data source ${dataSourceName.padEnd(longestName + 1)} to '${filePath}'`);
-                exportDataToFile("data", serializedData, {
+                
+                exportDataToFile("data", data, {
                     dataSourceName: dataSourceName,
                     serviceName: uploadOpts.serviceName,
                     timeToday: timeToday
-                })
+                });
             }
         })
     );

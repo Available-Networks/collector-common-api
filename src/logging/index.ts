@@ -1,1 +1,9 @@
-export * from "./logger";
+import {
+    Logger,
+    LoggerFactory,
+    LogLevel
+} from './logger';
+
+export {
+    LogLevel, Logger, LoggerFactory
+}

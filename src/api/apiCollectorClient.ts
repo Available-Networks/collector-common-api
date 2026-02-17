@@ -61,7 +61,14 @@ export default abstract class ApiCollectorClient {
 
         this.axiosClient.interceptors.request.use((config) => {
             const emoji = methodEmojiMap[config.method.toUpperCase()]
-            LoggerFactory.GetLogger().info(`[${emoji} ${config.method.toUpperCase()}] ${config.baseURL}${config.url}`);
+            const { baseURL, url, params } = config;
+
+            let paramStr = params
+                ? "?" + new URLSearchParams(params).toString()
+                : "";
+            
+            const finalURL = baseURL + url + paramStr
+            LoggerFactory.GetLogger().http(`[${emoji} ${config.method.toUpperCase()}] ${finalURL}`);
             return config;
         });
         

@@ -15,9 +15,14 @@ const commonErrorFields = [ "error", "message", "issue" ]
  * @param error - AxiosError thrown from a failed HTTP request
  */
 export const writeAxiosErrorLog = (error: AxiosError): [LogLevel, string] => {
-    const route: string = error.config?.url;
-    const response: AxiosResponse | undefined = error.response;
+    let route: string = error.config?.url;
 
+    const param = error.config?.params;
+    if(param) { 
+        route += `?` + (new URLSearchParams(param)).toString();
+    }
+
+    const response: AxiosResponse | undefined = error.response;
     const errorData: any = response?.data;
     
     // find the error messages kinda

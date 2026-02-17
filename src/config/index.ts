@@ -66,13 +66,11 @@ export function buildConfig<T extends z.ZodTypeAny = typeof zCollectorConfig>(
       .map(issue => `- [${issue.path.join(".")}] ${issue.message}`)
       .join("\n");
     
-    LoggerFactory.GetLogger().error("Invalid configuration:\n" + message);
+    console.error("Invalid configuration:\n" + message);
     process.exit(1); // fail-fast
   }
 
   _config = Object.freeze(result.data) as any;
-  
-  return
 }
 
 /**
