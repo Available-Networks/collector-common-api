@@ -18,3 +18,9 @@ export type NodeEnv = typeof NodeEnv[number];
  */
 export const ServiceLocation = ["site","global"] as const;
 export type ServiceLocation = typeof ServiceLocation[number];
+
+/*
+* Allowed file extensions to upload
+*/
+export const FileExtension = ["json","ndjson","csv","raw"] as const;
+export type FileExtension = typeof FileExtension[number];

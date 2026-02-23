@@ -11,4 +11,9 @@ find .. -maxdepth 1 -type d -name "collector-*" ! -name "collector-common-lib" |
     rm -rf "$path/collector-common-lib"
     cp package.dist.json "dist/package.json"
     cp -r dist "$path/collector-common-lib"
+
+    cur_path=$(pwd)
+    cd "$path"
+    bun update common-lib
+    cd "$cur_path"
 done

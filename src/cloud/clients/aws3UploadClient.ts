@@ -1,7 +1,7 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import z from "zod";
 
-import CloudUploadClient, { CloudUploadOpts } from "../cloudUploadClient";
+import CloudUploadClient, { CloudUploadOpts, CloudUploadOptsOut } from "../cloudUploadClient";
 import { formatDate } from "../../utils";
 import {LoggerFactory} from "../../logging/logger";
 
@@ -121,9 +121,9 @@ export default class AWS3UploadClient extends CloudUploadClient {
      * @throws If the underlying S3 client is disconnected
      * @throws If the AWS SDK `PutObjectCommand` fails
      */
-    async upload(
+    protected async upload(
         data: Buffer | Blob | string, 
-        opts: CloudUploadOpts
+        opts: CloudUploadOptsOut
     ) {
         let { filePath, filename } = opts;
 
@@ -132,13 +132,17 @@ export default class AWS3UploadClient extends CloudUploadClient {
                 serviceName,
                 dataSourceName, 
                 serviceLocation,
-                siteName
+                siteName,
+                extension
             } = opts;
+            
+            // stupid but AWS Glue doesn't like ndjson
+            const fixedExtension = extension === "ndjson" ? "json" : extension;
 
-            filename = filename ?? `${serviceName}-${dataSourceName}-${timeToday}.json`;
+            filename = filename ?? `${serviceName}-${dataSourceName}-${timeToday}.${fixedExtension}`;
             filePath = serviceLocation === "global"
-                ? `${serviceLocation}/${serviceName}/${dataSourceName}/${filename}`
-                : `${serviceLocation}/${siteName}/${serviceName}/${dataSourceName}/${filename}`;
+                ? `${serviceLocation}/${serviceName}/${serviceName}_${dataSourceName}/${filename}`
+                : `${serviceLocation}/${siteName}/${serviceName}/${serviceName}_${dataSourceName}/${filename}`;
         }
 
         const command = new PutObjectCommand({
@@ -147,10 +151,9 @@ export default class AWS3UploadClient extends CloudUploadClient {
             Body: data
         });
 
-        await this.#s3Client!.send(command);
+        await this.#s3Client.send(command);
 
-        const logger = LoggerFactory.GetLogger();
-        logger.info(`Successfully uploaded to S3 🪣  s3://${this.#bucketName}/${filePath}`);
+        LoggerFactory.GetLogger().info(`Successfully uploaded to S3 🪣  s3://${this.#bucketName}/${filePath}`);
     }
 
     /**

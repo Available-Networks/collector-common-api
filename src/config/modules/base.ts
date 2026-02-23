@@ -25,7 +25,7 @@ export const zBaseConfig = z.object({
      /**
      * Logging verbosity level for the service.
      */
-    LOG_LEVEL: z.enum(LogLevel).default("debug"),
+    LOG_LEVEL: z.enum(LogLevel).default("info"),
 
     /**
      * Current Node environment.

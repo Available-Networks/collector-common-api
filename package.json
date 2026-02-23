@@ -15,8 +15,9 @@
   },
   "version": "1.0.0",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.992.0",
+    "@aws-sdk/client-s3": "^3.995.0",
     "axios": "^1.13.5",
+    "parquetjs-lite": "^0.8.7",
     "winston": "^3.19.0",
     "zod": "^4.3.6"
   },

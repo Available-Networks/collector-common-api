@@ -1,5 +1,5 @@
 import z from "zod";
-import { ServiceLocation } from "../config/types";
+import { FileExtension, ServiceLocation } from "../config/types";
 
 import { LoggerFactory } from "../logging/logger";
 
@@ -18,7 +18,8 @@ export type CloudProvider = typeof CloudProvider[number];
  * 1. Provide an explicit `filePath`, or
  * 2. Provide enough metadata to construct a deterministic path.
  */
-export type CloudUploadOpts = z.infer<typeof zCloudUploadClientOpts>;
+export type CloudUploadOpts = z.input<typeof zCloudUploadClientOpts>;
+export type CloudUploadOptsOut = z.infer<typeof zCloudUploadClientOpts>;
 
 /**
  * Base abstraction for cloud upload clients.
@@ -73,7 +74,8 @@ export default abstract class CloudUploadClient {
         body: Buffer | Uint8Array | Blob | string,
         opts: CloudUploadOpts
     ) {
-        await this.upload(body, opts);
+        let parsedOpts = zCloudUploadClientOpts.parse(opts);
+        await this.upload(body, parsedOpts);
     }
 
     /**
@@ -143,11 +145,12 @@ export default abstract class CloudUploadClient {
  */
 const zCloudUploadClientOpts = z.object({
     filePath: z.string().optional(),
-    serviceLocation: z.enum(ServiceLocation),
+    serviceLocation: z.enum(ServiceLocation).optional(),
     siteName: z.string().optional(),
     serviceName: z.string().optional(),
     dataSourceName: z.string().optional(),
-    filename: z.string().optional()
+    filename: z.string().optional(),
+    extension: z.enum(FileExtension).optional().default("json")
 })
 .superRefine((data, ctx) => {
     const logger = LoggerFactory.GetLogger();
@@ -159,10 +162,12 @@ const zCloudUploadClientOpts = z.object({
         if(data.serviceName) { logger.debug("Using filePath argument for uploading; skipping 'serviceName'") }
         if(data.dataSourceName) { logger.debug("Using filePath argument for uploading; skipping 'dataSourceName'") }
         if(data.filename) { logger.debug("Using filePath argument for uploading; skipping 'filename'") }
+        if(data.extension) { logger.debug("Using filePath argument for uploading; skipping 'extension'") }
         return;
     }
 
     let messages = [];
+    if(!data.serviceLocation) { messages.push("serviceLocation must be specified if not using absolute file pathing"); }
     if(!data.serviceName) { messages.push("serviceName must be specified if not using absolute file pathing"); }
     if(!data.dataSourceName) { messages.push("dataSourceName must be specified if not using absolute file pathing"); }
     
