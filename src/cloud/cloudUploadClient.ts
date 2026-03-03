@@ -83,7 +83,7 @@ export default abstract class CloudUploadClient {
      *
      * After calling this method, the client instance should not be reused.
      */
-    abstract Disconnect();
+    abstract Disconnect(): void;
 
     /**
      * Factory method for creating a concrete upload client.
@@ -107,7 +107,7 @@ export default abstract class CloudUploadClient {
     protected abstract upload(
         body: Buffer | Uint8Array | Blob | string,
         opts: CloudUploadOpts
-    );
+    ): void;
 
     /**
      * Safely validates upload options.
@@ -145,9 +145,9 @@ export default abstract class CloudUploadClient {
  */
 const zCloudUploadClientOpts = z.object({
     filePath: z.string().optional(),
-    serviceLocation: z.enum(ServiceLocation).optional(),
+    serviceLocation: z.enum(ServiceLocation),
     siteName: z.string().optional(),
-    serviceName: z.string().optional(),
+    serviceName: z.string(),
     dataSourceName: z.string().optional(),
     filename: z.string().optional(),
     extension: z.enum(FileExtension).optional().default("json")

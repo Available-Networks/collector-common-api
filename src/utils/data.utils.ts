@@ -5,7 +5,7 @@ import { NodeEnv } from '../config/types';
 import { LoggerFactory, type Logger } from '../logging';
 import { formatDate, isValidData } from './util';
 
-import parquet from "parquetjs-lite";
+// import parquet from "parquetjs-lite";
 import { readFile, unlink } from "fs/promises";
 import { z } from "zod";
 import { Util } from '..';
@@ -137,6 +137,7 @@ function zodTypeToParquet(zodType: z.ZodTypeAny): ParquetFieldType {
  * const buffer = await convertToParquet(myArray, zApplicationSchemaBase);
  * await fs.writeFile("output.parquet", buffer);
  */
+/*
 export async function convertToParquet<T extends z.ZodRawShape>(
     data: Record<string, any>[],
     schema: z.ZodObject<T>
@@ -172,6 +173,7 @@ export async function convertToParquet<T extends z.ZodRawShape>(
     await unlink(tmpFile);
     return buffer;
 }
+*/
 
 /**
  * Converts an array of objects to Newline Delimited JSON (NDJSON) format.
@@ -187,5 +189,6 @@ export async function convertToParquet<T extends z.ZodRawShape>(
  * // '{"id":1}\n{"id":2}'
  */
 export function toNDJSON(data: Record<string, any>[]): string {
+    data = Array.isArray(data) ? data : [data];
     return data.map((record) => JSON.stringify(record)).join("\n");
 }

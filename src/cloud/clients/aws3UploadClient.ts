@@ -41,7 +41,7 @@ export default class AWS3UploadClient extends CloudUploadClient {
      * Underlying AWS SDK S3 client.
      * Set to `null` after {@link Disconnect} is called.
      */
-    #s3Client: S3Client | null;
+    #s3Client: S3Client;
 
     /**
      * Target S3 bucket name.
@@ -82,7 +82,6 @@ export default class AWS3UploadClient extends CloudUploadClient {
     Disconnect(): void {
         if (this.#s3Client) {
             this.#s3Client.destroy();
-            this.#s3Client = null;
         }
     }
 

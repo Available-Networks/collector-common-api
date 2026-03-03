@@ -25,7 +25,7 @@ import { LoggerFactory } from "../logging/logger";
  */
 export default abstract class ApiCollectorClient {
     /** Persistent axios object */
-    protected axiosClient: AxiosInstance;
+    #axiosClient: AxiosInstance;
 
     #MAX_RETRIES=10;
 
@@ -37,7 +37,7 @@ export default abstract class ApiCollectorClient {
      * @param needsDisconnect Whether subclass must implement disconnect logic
      */
     protected constructor(baseUrl: string, persistentHeaders: AxiosHeaders, maxRetries: number = 10) {
-        this.axiosClient = axios.create({
+        this.#axiosClient = axios.create({
             baseURL: baseUrl,
             headers: {
                 "Content-Type": "application/json",
@@ -50,8 +50,12 @@ export default abstract class ApiCollectorClient {
         this.initInterceptors();
     }
 
+    public get axiosClient() {
+        return this.#axiosClient;
+    }
+
     private initInterceptors() {
-        const methodEmojiMap = {
+        const methodEmojiMap: Record<string,string> = {
             GET: "💌",
             POST: "📬",
             PUT: "🔄",
@@ -60,15 +64,16 @@ export default abstract class ApiCollectorClient {
         };
 
         this.axiosClient.interceptors.request.use((config) => {
-            const emoji = methodEmojiMap[config.method.toUpperCase()]
-            const { baseURL, url, params } = config;
+            const { baseURL, url, params, method } = config;
+            
+            const httpMethod = (method ?? "???").toUpperCase()
+            const emoji = methodEmojiMap[httpMethod]
 
             let paramStr = params
                 ? "?" + new URLSearchParams(params).toString()
                 : "";
             
-            const finalURL = baseURL + url + paramStr
-            LoggerFactory.GetLogger().http(`[${emoji} ${config.method.toUpperCase()}] ${finalURL}`);
+            LoggerFactory.GetLogger().http(`[${emoji} ${httpMethod}] ${baseURL}${url}${paramStr}`);
             return config;
         });
         
@@ -77,6 +82,12 @@ export default abstract class ApiCollectorClient {
         // })
     }
 
+    /**
+     * Retry logic with exponential backoff.
+     *
+     * @param error The Axios error object
+     * @returns A Promise that resolves to the response if successful, or rejects with an error if all retries fail
+     */
     private async retryOrThrow(error: any) {
         const config = error.config;
 
@@ -112,7 +123,7 @@ export default abstract class ApiCollectorClient {
      *
      * @returns Aggregated collector data
      */
-    abstract getAllData(..._args): Promise<Record<string, any>> | Record<string, any>;
+    abstract getAllData(..._args: any): Promise<Record<string, any>> | Record<string, any>;
 
     /**
      * Factory constructor for subclasses.
@@ -145,7 +156,7 @@ export default abstract class ApiCollectorClient {
      * @throws InvalidAPIResponseError If response status is not successful
      * @throws AxiosError if axios errors
      */
-    protected async request<T = any>(
+    public async request<T = any>(
         method: Method,
         endpoint: string,
         opts?: AxiosRequestConfig
@@ -164,7 +175,6 @@ export default abstract class ApiCollectorClient {
 
         return response;
     }
-
 
     /**
      * Executes a request and validates the result with Zod.

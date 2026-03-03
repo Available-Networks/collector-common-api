@@ -10,7 +10,7 @@ import { CloudProvider } from "../../cloud/cloudUploadClient";
  * Each validator receives the raw config and a Zod refinement context,
  * allowing provider-specific config checks to report issues.
  */
-const cloudConfigValidators: Record<CloudProvider, (cfg, ctx) => void> = {
+const cloudConfigValidators: Record<CloudProvider, (cfg: any, ctx: any) => void> = {
   "aws_s3": AWS3UploadClient.validateConfig
 }
 
@@ -27,7 +27,7 @@ const cloudConfigValidators: Record<CloudProvider, (cfg, ctx) => void> = {
  * @param ctx - Zod refinement context
  * @returns `true` if all required fields are present, otherwise `false`
  */
-const validateCloudProviderInput = (val) => {
+const validateCloudProviderInput = (val: string | string[]): string[] | undefined => {
   if (typeof val === "string" && val.trim() !== "") return val.split(",").map(s => s.trim());
   if (Array.isArray(val) && val.length > 0) return val;
   return undefined; // treat missing or empty as undefined

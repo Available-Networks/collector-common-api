@@ -71,6 +71,7 @@ export function buildConfig<T extends z.ZodTypeAny = typeof zCollectorConfig>(
   }
 
   _config = Object.freeze(result.data) as any;
+  return result.data as z.infer<T>;
 }
 
 /**

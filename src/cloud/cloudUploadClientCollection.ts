@@ -11,10 +11,10 @@ import {LoggerFactory} from "../logging/logger";
  */
 const ClientBuilders: Record<CloudProvider, (config: CloudConfig) => Promise<CloudUploadClient>> = {
     "aws_s3": (config) => AWS3UploadClient.Create(
-        config.AWS_S3_BUCKET_NAME,
-        config.AWS_REGION,
-        config.AWS_ACCESS_KEY_ID,
-        config.AWS_SECRET_ACCESS_KEY
+        config.AWS_S3_BUCKET_NAME!,
+        config.AWS_REGION!,
+        config.AWS_ACCESS_KEY_ID!,
+        config.AWS_SECRET_ACCESS_KEY!
     )
 };
 
