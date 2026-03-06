@@ -10,6 +10,7 @@ import {LoggerFactory} from "../../logging/logger";
  * Evaluated once at module load time.
  */
 const timeToday = formatDate(new Date());
+const date = new Date().toISOString().split('T')[0];
 
 /**
  * AWS S3 implementation of {@link CloudUploadClient}.
@@ -135,19 +136,21 @@ export default class AWS3UploadClient extends CloudUploadClient {
                 extension
             } = opts;
             
-            // stupid but AWS Glue doesn't like ndjson
+            // stupid but AWS Glue doesn't like the ndjson extension even though the data is arranged in ndjson format
             const fixedExtension = extension === "ndjson" ? "json" : extension;
 
             filename = filename ?? `${serviceName}-${dataSourceName}-${timeToday}.${fixedExtension}`;
             filePath = serviceLocation === "global"
-                ? `${serviceLocation}/${serviceName}/${serviceName}_${dataSourceName}/${filename}`
-                : `${serviceLocation}/${siteName}/${serviceName}/${serviceName}_${dataSourceName}/${filename}`;
+                ? `global/${serviceName}/${serviceName}_${dataSourceName}/${filename}`
+                : `site/${dataSourceName}/site=${siteName}/date=${date}/data.json`;
         }
 
         const command = new PutObjectCommand({
             Bucket: this.#bucketName,
             Key: filePath,
-            Body: data
+            Body: data,
+            ContentType: "text/plain",
+            CacheControl: `max-age=${365 * 24 * 60 * 60 * 1000})` // expires in 1 year
         });
 
         await this.#s3Client.send(command);

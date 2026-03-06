@@ -2,11 +2,10 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { CloudUploadClientCollection, CloudUploadOpts } from '../cloud';
 import { NodeEnv } from '../config/types';
-import { LoggerFactory, type Logger } from '../logging';
+import { LoggerFactory } from '../logging';
 import { formatDate, isValidData } from './util';
 
 // import parquet from "parquetjs-lite";
-import { readFile, unlink } from "fs/promises";
 import { z } from "zod";
 import { Util } from '..';
 

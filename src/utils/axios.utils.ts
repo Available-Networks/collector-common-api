@@ -1,5 +1,5 @@
 import { AxiosError, AxiosResponse } from "axios";
-import { LogLevel, type Logger } from "../logging";
+import { LogLevel } from "../logging";
 
 // -----------------------------------------------------------------------------
 // Axios / HTTP Error Utilities
